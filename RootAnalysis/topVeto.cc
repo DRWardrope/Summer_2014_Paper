@@ -180,10 +180,10 @@ int main( int argc, char** argv )
    //factory->AddVariable( "var3",                "Variable 3", "units", 'F' );
    factory->AddVariable( "mW12",                "Dijet 12 m_{W}", "GeV", 'D' );
    factory->AddVariable( "mt12",                "Dijet 12 m_{t}", "GeV", 'D' );
-   factory->AddVariable( "dRW12",                "Dijet 12 #DeltaR_{W}", "", 'D' );
+   //factory->AddVariable( "dRW12",                "Dijet 12 #DeltaR_{W}", "", 'D' );
    factory->AddVariable( "mW34",                "Dijet 34 m_{W}", "GeV", 'D' );
    factory->AddVariable( "mt34",                "Dijet 34 m_{t}", "GeV", 'D' );
-   factory->AddVariable( "dRW34",                "Dijet 34 #DeltaR_{W}", "", 'D' );
+   //factory->AddVariable( "dRW34",                "Dijet 34 #DeltaR_{W}", "", 'D' );
 
    // You can add so-called "Spectator variables", which are not used in the MVA training,
    // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
