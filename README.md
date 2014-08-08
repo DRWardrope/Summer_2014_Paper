@@ -18,9 +18,9 @@ RivetAnalysis/: Analyses HepMC files using Rivet 2.1.2 and produces output ROOT 
 
 RootAnalysis/:  Analyse ROOT files from previous package to produce final results for paper.
                
-                topVeto.cc: Train MVA to reject ttbar events based on output HH signal and ttbar background ROOT files from                                   RivetAnalysis. Reproduces TopVetoWeights\ directory contents.
+                topVeto.cc: Train MVA to reject ttbar events based on output HH signal and ttbar background ROOT files from RivetAnalysis. Reproduces TopVetoWeights\ directory contents.
                
                 FinalPlotter: Applies topVeto MVA and final selection. Produces final plots along with cutflows to std::cout. 
-                              Also used to produce TMVA training inputs for final MVA when run with --makeTmvaInput command line                                option.
+                              Also used to produce TMVA training inputs for final MVA when run with --makeTmvaInput command line option.
                
-                TMVAClassification: Acts on output of ./FinalPlotter --makeTmvaInput to train classifier to separate HH from                                          all background. Reproduces weights/ directory contents.
+                TMVAClassification: Acts on output of ./FinalPlotter --makeTmvaInput to train classifier to separate HH from all background. Reproduces weights/ directory contents.
