@@ -128,15 +128,17 @@ int main( int argc, char** argv )
 			tree->GetEntry(i);
 			weight = xsecWeight * treeWeight;
 			abs_cosThetaStar = fabs(cosThetaStar);
-			plotter.fill("input_absCosThetaStar", abs_cosThetaStar, weight);
+			plotter.fill("dijets_absCosThetaStar", abs_cosThetaStar, weight);
 			plotter.fill("input_m12", m12, weight);
 			plotter.fill("input_m34", m34, weight);
 			if(fabs(m12 - 115) > 25. || fabs(m34 - 110.) > 25.) continue;
+			plotter.fill("dijets_mH_absCosThetaStar", abs_cosThetaStar, weight);
 			f_mW12 = mW12; f_mt12 = mt12; f_dRW12 = dRW12; f_mW34 = mW34; f_mt34 = mt34; f_dRW34 = dRW34;
 			//Apply top veto.
 			float topMVA = topVeto->EvaluateMVA("BDT");
 			plotter.fill("TopVetoBDT", topMVA, weight);
 			if(topMVA < -0.2) continue;
+			plotter.fill("topVeto_absCosThetaStar", abs_cosThetaStar, weight);
 			f_ptX = ptX; f_mX = mX; f_phi = phi; f_yX = yX;
 			f_m12 = m12; f_m34 = m34;
 			//abs_cosTheta1 = fabs(cosTheta1);
@@ -158,6 +160,7 @@ int main( int argc, char** argv )
 			float bdt = finalMVA->EvaluateMVA("BDT");
 			plotter.fill("BDT", bdt, weight);
 			if(bdt > 0.27) plotter.fill("postBDT_m34", m34, weight);
+			plotter.fill("MelaMVA_absCosThetaStar", abs_cosThetaStar, weight);
 		}
 	}
 
@@ -171,7 +174,7 @@ int main( int argc, char** argv )
 	plotter.plotAlone("m12", categories);
 	plotter.plotAlone("m34", categories);
 	plotter.plotAlone("input_m12", categories);
-	plotter.plotAlone("input_absCosThetaStar", categories);
+	plotter.plotAlone("dijets_absCosThetaStar", categories);
 	plotter.plotAlone("input_m34", categories);
 	plotter.plotAlone("absCosThetaStar", categories);
 	plotter.plotAlone("cosTheta1", categories);
@@ -232,7 +235,11 @@ void bookPlots(LittlePlotter& plotter)
 {
 	std::cout<<"bookPlots: booking plots now."<< std::endl;
 	plotter.printAllCategories();
-	plotter.book(new TH1F("input_absCosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, 0., 1.));
+	//These are used for printCutFlow, since they are bounded between 0 & 1 so the integration of the plot is trustworthy.
+	plotter.book(new TH1F("dijets_absCosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, 0., 1.));
+	plotter.book(new TH1F("dijets_mH_absCosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, 0., 1.));
+	plotter.book(new TH1F("topVeto_absCosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, 0., 1.));
+	plotter.book(new TH1F("MelaMVA_absCosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, 0., 1.));
 	plotter.book(new TH1F("input_m12", ";m_{12} [GeV];Number of Events", 50, 0., 250.));
 	plotter.book(new TH1F("input_m34", ";m_{34} [GeV];Number of Events", 50, 0., 250.));
 	plotter.book(new TH1F("mX", ";m_{X} [GeV];Number of Events", 50, 250., 750.));
@@ -295,21 +302,22 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
 		std::cout <<" & "<< *cat;
 	}
 	std::cout<<" \\\\\\hline"<< std::endl;
-	TString plotName = "input_absCosThetaStar";
+	TString plotName = "dijets_absCosThetaStar";
 	std::cout<<"2 dijets"; 
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
 		std::cout<<" & "<< formatNumberForTable(plotter.getPlot(plotName, *cat)->Integral());
 	}
 	std::cout<<"\\\\"<< std::endl;
-	plotName = "TopVetoBDT";
+	plotName = "dijets_mH_absCosThetaStar";
 	std::cout<<"2 dijets $m_H$"; 
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
 		std::cout<<" & "<< formatNumberForTable(plotter.getPlot(plotName, *cat)->Integral());
 	}
 	std::cout<<"\\\\"<< std::endl;
-	plotName = "BDT";
+	//plotName = "BDT";
+	plotName = "topVeto_absCosThetaStar";
 	std::cout<<"Top Veto"; 
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
@@ -317,18 +325,19 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
 	}
 	std::cout<<"\\\\"<< std::endl;
 	std::cout<<"MVA"; 
-	plotName = "postBDT_m34";
+	plotName = "MelaMVA_absCosThetaStar";
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
 		std::cout<<" & "<< formatNumberForTable(plotter.getPlot(plotName, *cat)->Integral());
 	}
 	std::cout<<"\\\\"<< std::endl;
 	std::cout<<"\\hline\\end{tabular}\\caption{"<< caption <<"}\\end{center}\\end{table}"<< std::endl;
+	std::cout<<std::endl;
 	//Now calculate S/B and S/√B (would be more efficient to calculate integrals once.
 	std::cout<<"\\begin{table}[t]\\begin{center}\\begin{tabular}{lcccc}"<<std::endl;
 	std::cout<<"Requirement & $S$ & $B$ & $S/B$ & $S/\\sqrt{B}$\\\\\\hline";
 	std::cout<<" \\\\\\hline"<< std::endl;
-	plotName = "input_absCosThetaStar";
+	plotName = "dijets_absCosThetaStar";
 	float sig = 0.; float back = 0.;
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
@@ -346,7 +355,8 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
 	}
 	std::cout<<"2 dijets $m_H$ & "<< formatNumberForTable(sig) <<" & "<< formatNumberForTable(back) <<" & "<< formatNumberForTable(sig/back) <<" & "<< formatNumberForTable(sig/sqrt(back)); 
 	std::cout<<"\\\\"<< std::endl;
-	plotName = "BDT";
+	//plotName = "BDT";
+	plotName = "absCosThetaStar";
 	back = 0.;
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{

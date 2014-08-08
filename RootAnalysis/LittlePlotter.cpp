@@ -103,12 +103,12 @@ void LittlePlotter::plotAlone(TString plotName, std::vector<TString>& categories
 		//txt->AddText(Form("RMS/<m_{b#bar{b}}> = %.3f", plot->GetRMS()/plot->GetMean()));
 		plot->SetLineWidth(2);
 		plot->Draw("E1");			
-		txt->Draw();
+		//txt->Draw();
 		c0->SaveAs(m_outputDir+TString("/")+plot->GetName()+TString(".pdf"));
 		TH1F* plotNorm = (TH1F*) plot->Clone(TString(plot->GetName())+"Norm");
 		plotNorm->Scale(1./plot->Integral());
 		plotNorm->Draw("HIST");			
-		txt->Draw();
+		//txt->Draw();
 		plotNorm->GetYaxis()->SetTitle("Arbitrary Units");
 		c0->SaveAs(m_outputDir+TString("/")+plot->GetName()+TString("_norm.pdf"));
 		delete txt;
@@ -215,6 +215,9 @@ void LittlePlotter::plotSoBVsEff(TString plotName, std::vector<TString>& signals
 	gSoB.GetXaxis()->SetTitle("Signal Efficiency");
 	gSoB.GetYaxis()->SetTitle("S/B");
 	cSoB->SaveAs(m_outputDir+TString("/")+sigPlots[0]->GetName()+TString("_SoB.pdf"));
+	cSoB->SetLogy(1);
+	cSoB->SaveAs(m_outputDir+TString("/")+sigPlots[0]->GetName()+TString("_SoB_Log.pdf"));
+	cSoB->SetLogy(0);
 	TGraph gSoSqrtB(eff, soSqrtB);
 	gSoSqrtB.SetMarkerStyle(21);
 	gSoSqrtB.Draw("AP");
