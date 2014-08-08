@@ -1,4 +1,7 @@
+#include <iomanip>
 #include <iostream>
+#include <sstream>
+
 
 #include "TFile.h"
 #include "TTree.h"
@@ -8,9 +11,10 @@
 
 void bookPlots(LittlePlotter& plotter);
 TMVA::Reader* bookTopVeto(float& f_mW12, float& f_mt12, float& f_mW34, float& f_mt34);
-TMVA::Reader* bookFinalMVA(float& f_mX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
+TMVA::Reader* bookMelaMVA(float& f_mX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
+std::string formatNumberForTable(float num);
 void makeTMVAInput(float& f_mX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
-void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories);
+void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std::string caption);
 void setupFileList(std::vector<TFile*>& files);
 std::map<TString, TTree*> setupOutputTrees(const std::vector<TString>& categories, float& weight,
 												float& f_mX, float& f_yX, float& f_ptX, 
@@ -53,7 +57,7 @@ int main( int argc, char** argv )
 	}
 	//Initialise the TMVA readers for the top veto and the final kinematic selection
 	TMVA::Reader* topVeto = bookTopVeto(f_mW12, f_mt12, f_mW34, f_mt34);
-	TMVA::Reader* finalMVA = bookFinalMVA(f_mX, f_m12, f_m34, abs_cosThetaStar, f_cosTheta1, f_cosTheta2, f_phi, modPhi1);
+	TMVA::Reader* finalMVA = bookMelaMVA(f_mX, f_m12, f_m34, abs_cosThetaStar, f_cosTheta1, f_cosTheta2, f_phi, modPhi1);
 
 	LittlePlotter plotter(categories);
 	bookPlots(plotter);
@@ -153,7 +157,7 @@ int main( int argc, char** argv )
 			plotter.fill("ptX", ptX, weight);
 			float bdt = finalMVA->EvaluateMVA("BDT");
 			plotter.fill("BDT", bdt, weight);
-			if(bdt > 0.2) plotter.fill("postBDT_m34", m34, weight);
+			if(bdt > 0.27) plotter.fill("postBDT_m34", m34, weight);
 		}
 	}
 
@@ -161,7 +165,6 @@ int main( int argc, char** argv )
 	std::vector<TString> background; background.push_back("bbbb"); background.push_back("bbcc"); background.push_back("ttbar"); 
 	background.push_back("Hjj"); background.push_back("ZH"); background.push_back("ttH"); 
 
-	printCutFlow(plotter, categories);	
 	plotter.plotAlone("BDT", categories);
 	plotter.plotAlone("TopVetoBDT", categories);
 	plotter.plotAlone("mX", categories);
@@ -179,8 +182,19 @@ int main( int argc, char** argv )
 	plotter.plotAlone("yX", categories);
 	plotter.plotAlone("postBDT_m34", categories);
 	plotter.plotStack("BDT", signal, background);
-
 	plotter.plotSoBVsEff("BDT", signal, background);
+
+	std::vector<TString> qcdBack; qcdBack.push_back("HH"); qcdBack.push_back("bbbb"); qcdBack.push_back("bbcc"); qcdBack.push_back("ttbar"); 
+	std::vector<TString> ewkBack; ewkBack.push_back("HH"); ewkBack.push_back("Hjj"); ewkBack.push_back("ZH"); ewkBack.push_back("ttH"); 
+	std::cout<<"--------------------Cut flow for QCD backgrounds:-----------------------------------------------------------"<<std::endl;
+	printCutFlow(plotter, qcdBack, "QCD backgrounds");	
+	std::cout<<"------------------------------------------------------------------------------------------------------------"<<std::endl;
+	std::cout<<"--------------------Cut flow for EWK backgrounds:-----------------------------------------------------------"<<std::endl;
+	printCutFlow(plotter, ewkBack, "EWK backgrounds");	
+	std::cout<<"------------------------------------------------------------------------------------------------------------"<<std::endl;
+	std::cout<<"--------------------Cut flow for all backgrounds:-----------------------------------------------------------"<<std::endl;
+	printCutFlow(plotter, categories, "All backgrounds");	
+	std::cout<<"------------------------------------------------------------------------------------------------------------"<<std::endl;
 	//if(makeTmvaInput) fOut->Close();
 	if(makeTmvaInput)
 	{
@@ -253,7 +267,7 @@ TMVA::Reader* bookTopVeto(float& f_mW12, float& f_mt12, float& f_mW34, float& f_
 	topVeto->BookMVA("BDT", "TopVetoWeights/TMVAClassification_BDT.weights.xml");
 	return topVeto;
 }
-TMVA::Reader* bookFinalMVA(float& f_mX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1)
+TMVA::Reader* bookMelaMVA(float& f_mX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1)
 {
 	TMVA::Reader* reader = new TMVA::Reader( "!Color:!Silent" );
 	//reader->AddVariable("ptX", &f_ptX);
@@ -270,7 +284,7 @@ TMVA::Reader* bookFinalMVA(float& f_mX, float& f_m12, float& f_m34, float& abs_c
 	reader->BookMVA("BDT", "MelaWeights/TMVAClassification_BDT.weights.xml");
 	return reader;
 }
-void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories)
+void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std::string caption)
 {
 	std::cout<<"\\begin{table}[t]\\begin{center}\\begin{tabular}{l";
 	for(int i = 0; i < categories.size(); ++i) std::cout <<"c";
@@ -285,31 +299,31 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories)
 	std::cout<<"2 dijets"; 
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
-		std::cout<<" & "<< plotter.getPlot(plotName, *cat)->Integral();
+		std::cout<<" & "<< formatNumberForTable(plotter.getPlot(plotName, *cat)->Integral());
 	}
 	std::cout<<"\\\\"<< std::endl;
 	plotName = "TopVetoBDT";
 	std::cout<<"2 dijets $m_H$"; 
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
-		std::cout<<" & "<< plotter.getPlot(plotName, *cat)->Integral();
+		std::cout<<" & "<< formatNumberForTable(plotter.getPlot(plotName, *cat)->Integral());
 	}
 	std::cout<<"\\\\"<< std::endl;
 	plotName = "BDT";
 	std::cout<<"Top Veto"; 
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
-		std::cout<<" & "<< plotter.getPlot(plotName, *cat)->Integral();
+		std::cout<<" & "<< formatNumberForTable(plotter.getPlot(plotName, *cat)->Integral());
 	}
 	std::cout<<"\\\\"<< std::endl;
 	std::cout<<"MVA"; 
 	plotName = "postBDT_m34";
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
-		std::cout<<" & "<< plotter.getPlot(plotName, *cat)->Integral();
+		std::cout<<" & "<< formatNumberForTable(plotter.getPlot(plotName, *cat)->Integral());
 	}
 	std::cout<<"\\\\"<< std::endl;
-	std::cout<<"\\hline\\end{tabular}\\caption{QCD Backgrounds}\\end{center}\\end{table}"<< std::endl;
+	std::cout<<"\\hline\\end{tabular}\\caption{"<< caption <<"}\\end{center}\\end{table}"<< std::endl;
 	//Now calculate S/B and S/√B (would be more efficient to calculate integrals once.
 	std::cout<<"\\begin{table}[t]\\begin{center}\\begin{tabular}{lcccc}"<<std::endl;
 	std::cout<<"Requirement & $S$ & $B$ & $S/B$ & $S/\\sqrt{B}$\\\\\\hline";
@@ -321,7 +335,7 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories)
 		if(*cat == "HH") sig = plotter.getPlot(plotName, *cat)->Integral();
 		else back += plotter.getPlot(plotName, *cat)->Integral();
 	}
-	std::cout<<"2 dijets & "<< sig <<" & "<< back <<" & "<< sig/back <<" & "<< sig/sqrt(back); 
+	std::cout<<"2 dijets & "<< formatNumberForTable(sig) <<" & "<< formatNumberForTable(back) <<" & "<< formatNumberForTable(sig/back) <<" & "<< formatNumberForTable(sig/sqrt(back)); 
 	std::cout<<"\\\\"<< std::endl;
 	plotName = "TopVetoBDT";
 	back = 0.;
@@ -330,7 +344,7 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories)
 		if(*cat == "HH") sig = plotter.getPlot(plotName, *cat)->Integral();
 		else back += plotter.getPlot(plotName, *cat)->Integral();
 	}
-	std::cout<<"2 dijets $m_H$ & "<< sig <<" & "<< back <<" & "<< sig/back <<" & "<< sig/sqrt(back); 
+	std::cout<<"2 dijets $m_H$ & "<< formatNumberForTable(sig) <<" & "<< formatNumberForTable(back) <<" & "<< formatNumberForTable(sig/back) <<" & "<< formatNumberForTable(sig/sqrt(back)); 
 	std::cout<<"\\\\"<< std::endl;
 	plotName = "BDT";
 	back = 0.;
@@ -339,7 +353,7 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories)
 		if(*cat == "HH") sig = plotter.getPlot(plotName, *cat)->Integral();
 		else back += plotter.getPlot(plotName, *cat)->Integral();
 	}
-	std::cout<<"Top Veto & "<< sig <<" & "<< back <<" & "<< sig/back <<" & "<< sig/sqrt(back); 
+	std::cout<<"Top Veto & "<< formatNumberForTable(sig) <<" & "<< formatNumberForTable(back) <<" & "<< formatNumberForTable(sig/back) <<" & "<< formatNumberForTable(sig/sqrt(back)); 
 	std::cout<<"\\\\"<< std::endl;
 	plotName = "postBDT_m34";
 	back = 0.;
@@ -348,9 +362,9 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories)
 		if(*cat == "HH") sig = plotter.getPlot(plotName, *cat)->Integral();
 		else back += plotter.getPlot(plotName, *cat)->Integral();
 	}
-	std::cout<<"MVA & "<< sig <<" & "<< back <<" & "<< sig/back <<" & "<< sig/sqrt(back); 
+	std::cout<<"MVA & "<< formatNumberForTable(sig) <<" & "<< formatNumberForTable(back) <<" & "<< formatNumberForTable(sig/back) <<" & "<< formatNumberForTable(sig/sqrt(back)); 
 	std::cout<<"\\\\"<< std::endl;
-	std::cout<<"\\hline\\end{tabular}\\caption{QCD Backgrounds}\\end{center}\\end{table}"<< std::endl;
+	std::cout<<"\\hline\\end{tabular}\\caption{"<< caption <<"}\\end{center}\\end{table}"<< std::endl;
 }
 std::map<TString, TTree*> setupOutputTrees(const std::vector<TString>& categories, float& weight,
 												float& f_mX, float& f_yX, float& f_ptX, 
@@ -374,4 +388,30 @@ std::map<TString, TTree*> setupOutputTrees(const std::vector<TString>& categorie
 		outTrees[*catIt]->Branch("cosTheta2", &f_cosTheta2, "cosTheta2/F");
 	}
 	return outTrees;
+}
+std::string formatNumberForTable(float num)
+{
+    float significand = num;
+    int exponent = 0;
+    if(fabs(num) > 1.)
+    {
+        while(fabs(significand) > 10)
+        {
+            significand /= 10.;
+            ++exponent;
+        }
+    }else if(fabs(num) > 0.){
+        while(fabs(significand) < 1.)
+        {
+            significand *= 10.;
+            --exponent;
+        }
+    }else{
+        std::cout<<"Input = "<< num <<", output = "<< 0 << std::endl;
+        return "0";
+    }
+    std::stringstream outStr;
+    if(exponent > 2) outStr<< std::setprecision(3) <<"$"<< significand <<"\\times10^{"<< exponent <<"}$";
+    else outStr << std::setprecision(3) << num;
+    return outStr.str();
 }
