@@ -180,8 +180,10 @@ int main( int argc, char** argv )
    //factory->AddVariable( "var3",                "Variable 3", "units", 'F' );
    factory->AddVariable( "mW12",                "Dijet 12 m_{W}", "GeV", 'D' );
    factory->AddVariable( "mt12",                "Dijet 12 m_{t}", "GeV", 'D' );
+   factory->AddVariable( "dRW12",                "Dijet 12 #DeltaR_{W}", "", 'D' );
    factory->AddVariable( "mW34",                "Dijet 34 m_{W}", "GeV", 'D' );
    factory->AddVariable( "mt34",                "Dijet 34 m_{t}", "GeV", 'D' );
+   factory->AddVariable( "dRW34",                "Dijet 34 #DeltaR_{W}", "", 'D' );
 
    // You can add so-called "Spectator variables", which are not used in the MVA training,
    // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
@@ -196,10 +198,10 @@ int main( int argc, char** argv )
    TFile *fHH = TFile::Open("/unix/atlas3/wardrope/2014Paper/AnaResults/HH/HH_1.root");
    TFile *fbbbb = TFile::Open("/unix/atlas3/wardrope/2014Paper/AnaResults/pp_bbbb/bbbb_1.root");
    TFile *fttbar = TFile::Open("/unix/atlas3/wardrope/2014Paper/AnaResults/pp_bbbb/bbbb_1.root");*/
-   TFile *fHH = TFile::Open("HH_test_dR20.root");
+   TFile *fHH = TFile::Open("HH.root");
    //TFile *fbbbb = TFile::Open("bbbb.root");
    //TFile *fbbcc = TFile::Open("bbcc.root");
-   TFile *fttbar = TFile::Open("ttbar_test_dR20.root");
+   TFile *fttbar = TFile::Open("ttbar.root");
    //TFile *fHjj = TFile::Open("Hjj.root");
    //TFile *fZH = TFile::Open("ZH.root");
    //TFile *fttH = TFile::Open("ttH.root");
