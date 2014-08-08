@@ -46,6 +46,9 @@ then
 elif [ $PROCESS == "Hjj" ] #Hjj: 6.055296 pb * BR(H->bb)
 then 
 	XSEC=3.4939
+elif [ $PROCESS == "Hbb" ] #Hbb: 0.8479 pb * BR(H->bb)
+then 
+	XSEC=0.48924
 elif [ $PROCESS == "ttH" ] #ttH: 2.345e-1 pb * BR(H->bb)
 then 
 	INCR=1
