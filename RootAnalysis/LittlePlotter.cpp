@@ -104,13 +104,13 @@ void LittlePlotter::plotAlone(TString plotName, std::vector<TString>& categories
 		plot->SetLineWidth(2);
 		plot->Draw("E1");			
 		txt->Draw();
-		c0->SaveAs(TString("Plots/")+plot->GetName()+TString(".pdf"));
+		c0->SaveAs(m_outputDir+TString("/")+plot->GetName()+TString(".pdf"));
 		TH1F* plotNorm = (TH1F*) plot->Clone(TString(plot->GetName())+"Norm");
 		plotNorm->Scale(1./plot->Integral());
 		plotNorm->Draw("HIST");			
 		txt->Draw();
 		plotNorm->GetYaxis()->SetTitle("Arbitrary Units");
-		c0->SaveAs(TString("Plots/")+plot->GetName()+TString("_norm.pdf"));
+		c0->SaveAs(m_outputDir+TString("/")+plot->GetName()+TString("_norm.pdf"));
 		delete txt;
 	}	
 	delete c0;
@@ -152,13 +152,13 @@ void LittlePlotter::plotOverlay(TString plotName, std::vector<TString>& categori
 	}	
 	cOver->cd();
 	leg.Draw();
-	cOver->SaveAs(TString("Plots/")+plots[0]->GetName()+TString(".pdf"));
+	cOver->SaveAs(m_outputDir+TString("/")+plots[0]->GetName()+TString(".pdf"));
 	cOverNorm->cd();
 	firstNorm->GetYaxis()->SetTitle("Arbitrary Units");
 	firstNorm->GetYaxis()->SetRangeUser(0, 1.05*normMax);
 	leg.Draw();
-	cOverNorm->SaveAs(TString("Plots/")+plots[0]->GetName()+TString("_norm.pdf"));
-	//cOverNorm->SaveAs(TString("Plots/")+plots[0]->GetName()+TString("_norm.eps"));
+	cOverNorm->SaveAs(m_outputDir+TString("/")+plots[0]->GetName()+TString("_norm.pdf"));
+	//cOverNorm->SaveAs(m_outputDir+TString("/")+plots[0]->GetName()+TString("_norm.eps"));
 	delete cOver; delete cOverNorm;
 } 
 void LittlePlotter::plotSoBVsEff(TString plotName, std::vector<TString>& signals, std::vector<TString>& backgrounds)
@@ -214,13 +214,13 @@ void LittlePlotter::plotSoBVsEff(TString plotName, std::vector<TString>& signals
 	gSoB.Draw("AP");
 	gSoB.GetXaxis()->SetTitle("Signal Efficiency");
 	gSoB.GetYaxis()->SetTitle("S/B");
-	cSoB->SaveAs(TString("Plots/")+sigPlots[0]->GetName()+TString("_SoB.pdf"));
+	cSoB->SaveAs(m_outputDir+TString("/")+sigPlots[0]->GetName()+TString("_SoB.pdf"));
 	TGraph gSoSqrtB(eff, soSqrtB);
 	gSoSqrtB.SetMarkerStyle(21);
 	gSoSqrtB.Draw("AP");
 	gSoSqrtB.GetXaxis()->SetTitle("Signal Efficiency");
 	gSoSqrtB.GetYaxis()->SetTitle("S/#sqrt{B}");
-	cSoB->SaveAs(TString("Plots/")+sigPlots[0]->GetName()+TString("_SoSqrtB.pdf"));
+	cSoB->SaveAs(m_outputDir+TString("/")+sigPlots[0]->GetName()+TString("_SoSqrtB.pdf"));
 	delete cSoB;
 }
 void LittlePlotter::plotStack(TString plotName, std::vector<TString>& signals, std::vector<TString>& backgrounds, bool sigAtBottom)
@@ -301,8 +301,8 @@ void LittlePlotter::plotStack(TString plotName, std::vector<TString>& signals, s
 	txt3->AddText("Expected for #intLdt = 3000 fb^{-1}");
 	txt3->Draw();
 	backStack.Draw("sameAXIS");
-	cStack->SaveAs(TString("Plots/")+sigPlots[0]->GetName()+TString("_Stack.pdf"));
-	//cStack->SaveAs(TString("Plots/")+sigPlots[0]->GetName()+TString("_Stack.eps"));
+	cStack->SaveAs(m_outputDir+TString("/")+sigPlots[0]->GetName()+TString("_Stack.pdf"));
+	//cStack->SaveAs(m_outputDir+TString("/")+sigPlots[0]->GetName()+TString("_Stack.eps"));
 	delete cStack;
 }
 std::pair<float, float> LittlePlotter::calculateSignificance(TString plotName, TString signal, std::vector<TString>& backgrounds, float minVal, float maxVal)

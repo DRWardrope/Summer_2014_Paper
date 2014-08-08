@@ -192,8 +192,8 @@ int main( int argc, char** argv )
 void setupFileList(std::vector<TFile*>& files)
 {
 	files.push_back(TFile::Open("HH.root", "READ"));
-//	files.push_back(TFile::Open("bbbb.root", "READ"));
-//	files.push_back(TFile::Open("bbcc.root", "READ"));
+	files.push_back(TFile::Open("bbbb.root", "READ"));
+	files.push_back(TFile::Open("bbcc.root", "READ"));
 	files.push_back(TFile::Open("ttbar.root", "READ"));
 	files.push_back(TFile::Open("Hjj.root", "READ"));
 	files.push_back(TFile::Open("ZH.root", "READ"));
@@ -260,14 +260,14 @@ TMVA::Reader* bookFinalMVA(float& f_mX, float& f_m12, float& f_m34, float& abs_c
 	reader->AddVariable("mX", &f_mX);
 	reader->AddVariable("m12", &f_m12);
 	reader->AddVariable("m34", &f_m34);
-	reader->AddVariable("abs(cosThetaStar)", &abs_cosThetaStar);
+	reader->AddVariable("absCosThetaStar", &abs_cosThetaStar);
 	reader->AddVariable("cosTheta1", &f_cosTheta1);
 	reader->AddVariable("cosTheta2", &f_cosTheta2);
 	reader->AddVariable("Phi", &f_phi);
-	reader->AddVariable("abs(Phi1)-pi/2", &modPhi1);
+	reader->AddVariable("modPhi1", &modPhi1);
    	//factory->AddVariable( "cosTheta1 := abs(cosTheta1)",                "|cos(#theta_{1})|", "", 'D' );
     //factory->AddVariable( "Phi",                "#Phi", "", 'D' );
-	reader->BookMVA("BDT", "weights/TMVAClassification_BDT.weights.xml");
+	reader->BookMVA("BDT", "MelaWeights/TMVAClassification_BDT.weights.xml");
 	return reader;
 }
 void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories)

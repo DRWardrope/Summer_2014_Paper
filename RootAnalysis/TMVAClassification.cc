@@ -45,6 +45,7 @@
 #include "TSystem.h"
 #include "TROOT.h"
 
+#include "TMVA/Config.h"
 #include "TMVA/Factory.h"
 #include "TMVA/Tools.h"
 
@@ -169,7 +170,7 @@ int main( int argc, char** argv )
    // If you wish to modify default settings
    // (please check "src/Config.h" to see all available global options)
    //    (TMVA::gConfig().GetVariablePlotting()).fTimesRMS = 8.0;
-   //    (TMVA::gConfig().GetIONames()).fWeightFileDir = "myWeightDirectory";
+       (TMVA::gConfig().GetIONames()).fWeightFileDir = "MelaWeights";
 
    // Define the input variables that shall be used for the MVA training
    // note that you may also use variable expressions, such as: "3*var1/var2*abs(var3)"
@@ -178,18 +179,13 @@ int main( int argc, char** argv )
    //factory->AddVariable( "myvar2 := var1-var2", "Expression 2", "", 'F' );
    //factory->AddVariable( "var3",                "Variable 3", "units", 'F' );
    factory->AddVariable( "mX",                "m_{X}", "GeV", 'D' );
-   //factory->AddVariable( "ptX",                "X p_{T}", "GeV", 'D' );
-   //factory->AddVariable( "abs_yX := abs(yX)",                "|y_{X}|", "", 'D' );
    factory->AddVariable( "m12",                "m_{12}", "GeV", 'D' );
    factory->AddVariable( "m34",                "m_{34}", "GeV", 'D' );
-   //factory->AddVariable( "cosThetaStar := cosThetaStar",                "cos(#Theta*)", "", 'D' );
-   factory->AddVariable( "abs_cosThetaStar := abs(cosThetaStar)",                "|cos(#Theta*)|", "", 'D' );
-   //factory->AddVariable( "cosTheta1 := abs(cosTheta1)",                "|cos(#theta_{1})|", "", 'D' );
-   //factory->AddVariable( "cosTheta2 := abs(cosTheta2)",                "|cos(#theta_{2})|", "", 'D' );
+   factory->AddVariable( "absCosThetaStar",                "|cos(#Theta*)|", "", 'D' );
    factory->AddVariable( "cosTheta1",                "|cos(#theta_{1})|", "", 'D' );
    factory->AddVariable( "cosTheta2",                "|cos(#theta_{2})|", "", 'D' );
    factory->AddVariable( "Phi",                "#Phi", "", 'D' );
-   factory->AddVariable( "modPhi1 := abs(Phi1) - pi/2",                "|#Phi_{1}| - #pi/2", "", 'D' );
+   factory->AddVariable( "modPhi1",                "|#Phi_{1}| - #pi/2", "", 'D' );
 
    // You can add so-called "Spectator variables", which are not used in the MVA training,
    // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
@@ -200,47 +196,37 @@ int main( int argc, char** argv )
    // Read training and test data
    // (it is also possible to use ASCII format as input -> see TMVA Users Guide)
    
-/*
-   TFile *fHH = TFile::Open("/unix/atlas3/wardrope/2014Paper/AnaResults/HH/HH_1.root");
-   TFile *fbbbb = TFile::Open("/unix/atlas3/wardrope/2014Paper/AnaResults/pp_bbbb/bbbb_1.root");
-   TFile *fttbar = TFile::Open("/unix/atlas3/wardrope/2014Paper/AnaResults/pp_bbbb/bbbb_1.root");*/
-   TFile *fHH = TFile::Open("HH.root");
+   /*TFile *fHH = TFile::Open("HH.root");
    TFile *fbbbb = TFile::Open("bbbb.root");
    TFile *fbbcc = TFile::Open("bbcc.root");
    TFile *fttbar = TFile::Open("ttbar.root");
    TFile *fHjj = TFile::Open("Hjj.root");
    TFile *fZH = TFile::Open("ZH.root");
-   TFile *fttH = TFile::Open("ttH.root");
+   TFile *fttH = TFile::Open("ttH.root");*/
+
+   TFile *fIn = TFile::Open("TMVAInput.root");
    
-   std::cout << "--- TMVAClassification       : Using input files :" 
-			<< fHH->GetName() << ", "
-			<< fbbbb->GetName() << ", "
-			<< fbbcc->GetName() << ", "
-			<< fttbar->GetName() << ", "
-			<< fHjj->GetName() << ", "
-			<< fZH->GetName() << ", "
-			<< fttH->GetName() << ", "
-			<< std::endl;
-	//		<< fttbar->GetName() << std::endl;
+   std::cout << "--- TMVAClassification       : Using input file :" << fIn->GetName() << std::endl;
    
    // --- Register the training and test trees
 
-   TTree *t_signal     = (TTree*)fHH->Get("TMVAInput");
-   TTree *t_bbbb = (TTree*)fbbbb->Get("TMVAInput");
-   TTree *t_bbcc = (TTree*)fbbcc->Get("TMVAInput");
-   TTree *t_ttbar = (TTree*)fttbar->Get("TMVAInput");
-   TTree *t_Hjj = (TTree*)fHjj->Get("TMVAInput");
-   TTree *t_ZH = (TTree*)fZH->Get("TMVAInput");
-   TTree *t_ttH = (TTree*)fttH->Get("TMVAInput");
+   TTree *t_signal     = (TTree*)fIn->Get("HHOut");
+   TTree *t_bbbb = (TTree*)fIn->Get("bbbbOut");
+   TTree *t_bbcc = (TTree*)fIn->Get("bbccOut");
+   TTree *t_ttbar = (TTree*)fIn->Get("ttbarOut");
+   TTree *t_Hjj = (TTree*)fIn->Get("HjjOut");
+   TTree *t_ZH = (TTree*)fIn->Get("ZHOut");
+   TTree *t_ttH = (TTree*)fIn->Get("ttHOut");
    
    // global event weights per tree (see below for setting event-wise weights)
-   Double_t signalWeight = 0.2784;
-   Double_t bbbbWeight =0.00002048613238; 
-   Double_t bbccWeight = 0.00002837226854;
-   Double_t ttbarWeight = 27.38889204589483; 
-   Double_t HjjWeight = 47.19870674904087;
-   Double_t ZHWeight = 0.08693142857143;
-   Double_t ttHWeight = 0.20393102124765;
+	//Unnecessary now, since FinalPlotter incorporates cross-section & lumi information into event weight variable
+   Double_t signalWeight = 1.;
+   Double_t bbbbWeight =1.; 
+   Double_t bbccWeight = 1.;
+   Double_t ttbarWeight = 1.; 
+   Double_t HjjWeight = 1.;
+   Double_t ZHWeight = 1.;
+   Double_t ttHWeight = 1.;
    
    // You can add an arbitrary number of signal or background trees
    factory->AddSignalTree    ( t_signal,     signalWeight     );
@@ -297,10 +283,9 @@ int main( int argc, char** argv )
    factory->SetBackgroundWeightExpression("weight");
 
    // Apply additional cuts on the signal and background samples (can be different)
-   //TCut mycuts = "";
-   //TCut mycutb = "";
-   TCut mycuts = "pt12 > 150. && pt34 > 150. && abs(m12 - 115.) < 25. && abs(m34 - 110.) < 25."; // for example: TCut mycuts = "abs(var1)<0.5 && abs(var2-0.5)<1";
-   TCut mycutb = "pt12 > 150. && pt34 > 150. && abs(m12 - 115.) < 25. && abs(m34 - 110.) < 25."; // for example: TCut mycutb = "abs(var1)<0.5";
+	//No additional cuts are necessary, since FinalPlotter should have applied them.
+   TCut mycuts = "";
+   TCut mycutb = "";
 
    // Tell the factory how to use the training and testing events
    //

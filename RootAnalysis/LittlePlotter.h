@@ -16,8 +16,8 @@
 class LittlePlotter
 {
 	public:
-		LittlePlotter() {setupColourPalettes();};
-		LittlePlotter(std::vector<TString>& categories): m_categories(categories) {setupColourPalettes();};
+		LittlePlotter(TString outputDir=TString("Plots")): m_outputDir(outputDir) {setupColourPalettes(); m_outputDir = "Plots";};
+		LittlePlotter(std::vector<TString>& categories, TString outputDir=TString("Plots")): m_categories(categories), m_outputDir(outputDir) {setupColourPalettes();};
 		void book(TH1F*);
 		std::pair<float, float> calculateSignificance(TString plotName, TString signal, std::vector<TString>& backgrounds, float minVal, float maxVal);
 		void fill(TString name, float value, float weight=1.){ getPlot(name, m_currentCat)->Fill(value, weight);}
@@ -30,11 +30,13 @@ class LittlePlotter
 		void printAllCategories();
 		void printAllPlotNames();
 		void scalePlots(TString plotName, std::vector<TString>& categories, std::map<TString,float>& numerator, std::map<TString,float>& denominator);
+		void setOutputDir(TString outputDir) { m_outputDir = outputDir;}
 		void setCurrentCat(const TString& category){ m_currentCat = category; }
 		void setupColourPalettes();
 		void writeAll();
 		TString legendName(const char*);
 	private:
+		TString m_outputDir;
 		std::vector<TString> m_categories;
 		TString m_currentCat;
 		std::map<TString, std::vector<TH1F*> > m_th1f;
