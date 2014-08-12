@@ -1,6 +1,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <cassert>
 
 
 #include "TFile.h"
@@ -11,9 +12,9 @@
 
 void bookPlots(LittlePlotter& plotter);
 TMVA::Reader* bookTopVeto(float& f_mW12, float& f_mt12, float& f_mW34, float& f_mt34);
-TMVA::Reader* bookMelaMVA(float& f_mX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
+TMVA::Reader* bookMelaMVA(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
 std::string formatNumberForTable(float num);
-void makeTMVAInput(float& f_mX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
+//void makeTMVAInput(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
 void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std::string caption);
 void setupFileList(std::vector<TFile*>& files);
 std::map<TString, TTree*> setupOutputTrees(const std::vector<TString>& categories, float& weight,
@@ -21,6 +22,11 @@ std::map<TString, TTree*> setupOutputTrees(const std::vector<TString>& categorie
 												float& f_m12, float& f_m34, float& abs_cosThetaStar, 
 												float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
 void setupTrees(const std::vector<TFile*>& files, std::vector<TString>& categories, std::map<TString, TTree*>& trees, std::map<TString, TTree*>& metaTrees);
+
+//                         l                    c    b                                                tau
+double oldTagWeights[] = {0.01, -99, -99, -99, 0.2, 0.7, -99, -99, -99, -99, -99, -99, -99, -99, -99, 0.2};
+double newTagWeights[] = {0.01, -99, -99, -99, 0.1, 0.7, -99, -99, -99, -99, -99, -99, -99, -99, -99, 0.2};
+
 int main( int argc, char** argv )
 {
 	bool makeTmvaInput = false;
@@ -57,7 +63,7 @@ int main( int argc, char** argv )
 	}
 	//Initialise the TMVA readers for the top veto and the final kinematic selection
 	TMVA::Reader* topVeto = bookTopVeto(f_mW12, f_mt12, f_mW34, f_mt34);
-	TMVA::Reader* finalMVA = bookMelaMVA(f_mX, f_m12, f_m34, abs_cosThetaStar, f_cosTheta1, f_cosTheta2, f_phi, modPhi1);
+	TMVA::Reader* finalMVA = makeTmvaInput ? 0 : bookMelaMVA(f_mX, f_yX, f_ptX, f_m12, f_m34, abs_cosThetaStar, f_cosTheta1, f_cosTheta2, f_phi, modPhi1);
 
 	LittlePlotter plotter(categories);
 	bookPlots(plotter);
@@ -82,10 +88,11 @@ int main( int argc, char** argv )
 		//Calculate weights to account for sample statistics and process cross-sections
 		//Cross-sections are in fb.
 		float xsec = -99.; 
-		if(treeIt->first == "bbbb") xsec = 146030; 
-		else if(treeIt->first == "bbcc") xsec = 317780; 
+		if(treeIt->first == "bbbb") xsec = 146030;// * 1.5; 
+		else if(treeIt->first == "bbcc") xsec = 317780;// * 1.5; 
 		else if(treeIt->first == "ttbar") xsec = 212070;
 		else if(treeIt->first == "Hjj") xsec = 3493.9;
+		else if(treeIt->first == "Hbb") xsec = 489.24;
 		else if(treeIt->first == "ZH") xsec = 35.497;
 		else if(treeIt->first == "ttH") xsec = 135.31;
 		else if(treeIt->first == "HH") xsec = 11.586;
@@ -101,8 +108,15 @@ int main( int argc, char** argv )
 		std::cout<<"Analysing "<< treeIt->first << std::endl;
 		TTree* tree = treeIt->second;
 		long nEvents = tree->GetEntries();
-		double treeWeight;
+		double treeWeight, genWeight, btagWeight;
+		int flav1, flav2, flav3, flav4;
 		tree->SetBranchAddress("weight", &treeWeight);
+		tree->SetBranchAddress("genWeight", &genWeight);
+		tree->SetBranchAddress("btagWeight", &btagWeight);
+		tree->SetBranchAddress("flav1", &flav1);
+		tree->SetBranchAddress("flav2", &flav2);
+		tree->SetBranchAddress("flav3", &flav3);
+		tree->SetBranchAddress("flav4", &flav4);
 		tree->SetBranchAddress("yX", &yX);
 		tree->SetBranchAddress("ptX", &ptX);
 		tree->SetBranchAddress("mX", &mX);
@@ -121,11 +135,21 @@ int main( int argc, char** argv )
 		tree->SetBranchAddress("cosTheta2", &cosTheta2);
 		tree->SetBranchAddress("Phi", &phi);
 		tree->SetBranchAddress("Phi1", &phi1);
-		
+
 		for(int i = 0; i < nEvents; ++i)
 		{
             if(i%(nEvents/10) == 0) std::cout<<"Analysing event "<< i <<"/"<< nEvents << std::endl;
 			tree->GetEntry(i);
+
+			// Modify the b-tagging weight
+			assert(fabs((treeWeight - genWeight*btagWeight)/treeWeight) < 1e-3); // Make sure that we understand the current weight, otherwise abort
+			double oldWeight = oldTagWeights[flav1] * oldTagWeights[flav2] * oldTagWeights[flav3] * oldTagWeights[flav4];
+			assert(fabs(oldWeight - btagWeight) < 1e-3);
+			double newWeight = newTagWeights[flav1] * newTagWeights[flav2] * newTagWeights[flav3] * newTagWeights[flav4];
+			assert(newWeight > 0 && newWeight < 1);
+			treeWeight *= newWeight/oldWeight;
+			//
+
 			weight = xsecWeight * treeWeight;
 			abs_cosThetaStar = fabs(cosThetaStar);
 			plotter.fill("dijets_absCosThetaStar", abs_cosThetaStar, weight);
@@ -157,9 +181,9 @@ int main( int argc, char** argv )
 			plotter.fill("Phi1", phi1, weight);
 			plotter.fill("yX", yX, weight);
 			plotter.fill("ptX", ptX, weight);
-			float bdt = finalMVA->EvaluateMVA("BDT");
+			float bdt = finalMVA ? finalMVA->EvaluateMVA("BDT") : 0;
 			plotter.fill("BDT", bdt, weight);
-			if(bdt > 0.27) plotter.fill("postBDT_m34", m34, weight);
+			if(bdt > 0.16) plotter.fill("postBDT_m34", m34, weight);
 			plotter.fill("MelaMVA_absCosThetaStar", abs_cosThetaStar, weight);
 		}
 	}
@@ -274,11 +298,12 @@ TMVA::Reader* bookTopVeto(float& f_mW12, float& f_mt12, float& f_mW34, float& f_
 	topVeto->BookMVA("BDT", "TopVetoWeights/TMVAClassification_BDT.weights.xml");
 	return topVeto;
 }
-TMVA::Reader* bookMelaMVA(float& f_mX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1)
+TMVA::Reader* bookMelaMVA(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1)
 {
 	TMVA::Reader* reader = new TMVA::Reader( "!Color:!Silent" );
-	//reader->AddVariable("ptX", &f_ptX);
 	reader->AddVariable("mX", &f_mX);
+	reader->AddVariable("yX", &f_yX);
+	reader->AddVariable("ptX", &f_ptX);
 	reader->AddVariable("m12", &f_m12);
 	reader->AddVariable("m34", &f_m34);
 	reader->AddVariable("absCosThetaStar", &abs_cosThetaStar);

@@ -179,6 +179,8 @@ int main( int argc, char** argv )
    //factory->AddVariable( "myvar2 := var1-var2", "Expression 2", "", 'F' );
    //factory->AddVariable( "var3",                "Variable 3", "units", 'F' );
    factory->AddVariable( "mX",                "m_{X}", "GeV", 'D' );
+   factory->AddVariable( "yX",                "y_{X}", "", 'D' );
+   factory->AddVariable( "ptX",                "pt_{X}", "GeV", 'D' );
    factory->AddVariable( "m12",                "m_{12}", "GeV", 'D' );
    factory->AddVariable( "m34",                "m_{34}", "GeV", 'D' );
    factory->AddVariable( "absCosThetaStar",                "|cos(#Theta*)|", "", 'D' );
