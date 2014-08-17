@@ -25,7 +25,8 @@ void setupTrees(const std::vector<TFile*>& files, std::vector<TString>& categori
 
 //                         l                    c    b                                                tau
 double oldTagWeights[] = {0.01, -99, -99, -99, 0.2, 0.7, -99, -99, -99, -99, -99, -99, -99, -99, -99, 0.2};
-double newTagWeights[] = {0.01, -99, -99, -99, 0.1, 0.7, -99, -99, -99, -99, -99, -99, -99, -99, -99, 0.2};
+double newTagWeights[] = {0.01, -99, -99, -99, 0.1, 0.7, -99, -99, -99, -99, -99, -99, -99, -99, -99, 0.1};
+bool changeTagWeights = false;
 
 int main( int argc, char** argv )
 {
@@ -88,8 +89,8 @@ int main( int argc, char** argv )
 		//Calculate weights to account for sample statistics and process cross-sections
 		//Cross-sections are in fb.
 		float xsec = -99.; 
-		if(treeIt->first == "bbbb") xsec = 146030;// * 1.5; 
-		else if(treeIt->first == "bbcc") xsec = 317780;// * 1.5; 
+		if(treeIt->first == "bbbb") xsec = 146030 * 1.5; 
+		else if(treeIt->first == "bbcc") xsec = 317780 * 1.5; 
 		else if(treeIt->first == "ttbar") xsec = 212070;
 		else if(treeIt->first == "Hjj") xsec = 3493.9;
 		else if(treeIt->first == "Hbb") xsec = 489.24;
@@ -142,13 +143,18 @@ int main( int argc, char** argv )
 			tree->GetEntry(i);
 
 			// Modify the b-tagging weight
-			assert(fabs((treeWeight - genWeight*btagWeight)/treeWeight) < 1e-3); // Make sure that we understand the current weight, otherwise abort
-			double oldWeight = oldTagWeights[flav1] * oldTagWeights[flav2] * oldTagWeights[flav3] * oldTagWeights[flav4];
-			assert(fabs(oldWeight - btagWeight) < 1e-3);
-			double newWeight = newTagWeights[flav1] * newTagWeights[flav2] * newTagWeights[flav3] * newTagWeights[flav4];
-			assert(newWeight > 0 && newWeight < 1);
-			treeWeight *= newWeight/oldWeight;
-			//
+			if (changeTagWeights) {
+
+				// Make sure that we understand the current weight, otherwise abort
+				assert(fabs((treeWeight - genWeight*btagWeight)/treeWeight) < 1e-3);
+				double oldWeight = oldTagWeights[flav1] * oldTagWeights[flav2] * oldTagWeights[flav3] * oldTagWeights[flav4];
+				assert(fabs(oldWeight - btagWeight) < 1e-3);
+
+				// Calculate and apply the new weight, unexpected labels (weight=-99) make the assertion fail
+				double newWeight = newTagWeights[flav1] * newTagWeights[flav2] * newTagWeights[flav3] * newTagWeights[flav4];
+				assert(newWeight > 0 && newWeight < 1);
+				treeWeight *= newWeight/oldWeight;
+			}
 
 			weight = xsecWeight * treeWeight;
 			abs_cosThetaStar = fabs(cosThetaStar);
@@ -161,7 +167,7 @@ int main( int argc, char** argv )
 			//Apply top veto.
 			float topMVA = topVeto->EvaluateMVA("BDT");
 			plotter.fill("TopVetoBDT", topMVA, weight);
-			if(topMVA < -0.2) continue;
+			if(topMVA < -0.06) continue;
 			plotter.fill("topVeto_absCosThetaStar", abs_cosThetaStar, weight);
 			f_ptX = ptX; f_mX = mX; f_phi = phi; f_yX = yX;
 			f_m12 = m12; f_m34 = m34;
@@ -183,14 +189,16 @@ int main( int argc, char** argv )
 			plotter.fill("ptX", ptX, weight);
 			float bdt = finalMVA ? finalMVA->EvaluateMVA("BDT") : 0;
 			plotter.fill("BDT", bdt, weight);
-			if(bdt > 0.16) plotter.fill("postBDT_m34", m34, weight);
+			//if(bdt < 0.0006) continue;
+			if(bdt < 0.0023) continue;
+			plotter.fill("postBDT_m34", m34, weight);
 			plotter.fill("MelaMVA_absCosThetaStar", abs_cosThetaStar, weight);
 		}
 	}
 
 	std::vector<TString> signal; signal.push_back("HH");
 	std::vector<TString> background; background.push_back("bbbb"); background.push_back("bbcc"); background.push_back("ttbar"); 
-	background.push_back("Hjj"); background.push_back("ZH"); background.push_back("ttH"); 
+	background.push_back("Hbb"); background.push_back("ZH"); background.push_back("ttH"); 
 
 	plotter.plotAlone("BDT", categories);
 	plotter.plotAlone("TopVetoBDT", categories);
@@ -212,7 +220,7 @@ int main( int argc, char** argv )
 	plotter.plotSoBVsEff("BDT", signal, background);
 
 	std::vector<TString> qcdBack; qcdBack.push_back("HH"); qcdBack.push_back("bbbb"); qcdBack.push_back("bbcc"); qcdBack.push_back("ttbar"); 
-	std::vector<TString> ewkBack; ewkBack.push_back("HH"); ewkBack.push_back("Hjj"); ewkBack.push_back("ZH"); ewkBack.push_back("ttH"); 
+	std::vector<TString> ewkBack; ewkBack.push_back("HH"); ewkBack.push_back("Hbb"); ewkBack.push_back("ZH"); ewkBack.push_back("ttH"); 
 	std::cout<<"--------------------Cut flow for QCD backgrounds:-----------------------------------------------------------"<<std::endl;
 	printCutFlow(plotter, qcdBack, "QCD backgrounds");	
 	std::cout<<"------------------------------------------------------------------------------------------------------------"<<std::endl;
@@ -236,7 +244,7 @@ void setupFileList(std::vector<TFile*>& files)
 	files.push_back(TFile::Open("bbbb.root", "READ"));
 	files.push_back(TFile::Open("bbcc.root", "READ"));
 	files.push_back(TFile::Open("ttbar.root", "READ"));
-	files.push_back(TFile::Open("Hjj.root", "READ"));
+	files.push_back(TFile::Open("Hbb.root", "READ"));
 	files.push_back(TFile::Open("ZH.root", "READ"));
 	files.push_back(TFile::Open("ttH.root", "READ"));
 	std::cout<<"setupFileList: Listed "<< files.size() <<" for processing."<< std::endl;

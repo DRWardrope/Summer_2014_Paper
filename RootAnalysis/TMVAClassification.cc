@@ -216,7 +216,7 @@ int main( int argc, char** argv )
    TTree *t_bbbb = (TTree*)fIn->Get("bbbbOut");
    TTree *t_bbcc = (TTree*)fIn->Get("bbccOut");
    TTree *t_ttbar = (TTree*)fIn->Get("ttbarOut");
-   TTree *t_Hjj = (TTree*)fIn->Get("HjjOut");
+   TTree *t_Hbb = (TTree*)fIn->Get("HbbOut");
    TTree *t_ZH = (TTree*)fIn->Get("ZHOut");
    TTree *t_ttH = (TTree*)fIn->Get("ttHOut");
    
@@ -226,7 +226,7 @@ int main( int argc, char** argv )
    Double_t bbbbWeight =1.; 
    Double_t bbccWeight = 1.;
    Double_t ttbarWeight = 1.; 
-   Double_t HjjWeight = 1.;
+   Double_t HbbWeight = 1.;
    Double_t ZHWeight = 1.;
    Double_t ttHWeight = 1.;
    
@@ -235,7 +235,7 @@ int main( int argc, char** argv )
    factory->AddBackgroundTree( t_bbbb, bbbbWeight );
    factory->AddBackgroundTree( t_bbcc, bbccWeight );
    factory->AddBackgroundTree( t_ttbar, ttbarWeight );
-   factory->AddBackgroundTree( t_Hjj, HjjWeight );
+   factory->AddBackgroundTree( t_Hbb, HbbWeight );
    factory->AddBackgroundTree( t_ZH, ZHWeight );
    factory->AddBackgroundTree( t_ttH, ttHWeight );
    
