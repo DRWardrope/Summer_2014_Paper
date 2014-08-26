@@ -12,14 +12,14 @@
 
 void bookPlots(LittlePlotter& plotter);
 TMVA::Reader* bookTopVeto(float& f_mW12, float& f_mt12, float& f_mW34, float& f_mt34);
-TMVA::Reader* bookMelaMVA(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
+TMVA::Reader* bookMelaMVA(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& f_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
 std::string formatNumberForTable(float num);
-//void makeTMVAInput(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
+//void makeTMVAInput(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& f_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
 void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std::string caption);
 void setupFileList(std::vector<TFile*>& files);
 std::map<TString, TTree*> setupOutputTrees(const std::vector<TString>& categories, float& weight,
 												float& f_mX, float& f_yX, float& f_ptX, 
-												float& f_m12, float& f_m34, float& abs_cosThetaStar, 
+												float& f_m12, float& f_m34, float& f_cosThetaStar, 
 												float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
 void setupTrees(const std::vector<TFile*>& files, std::vector<TString>& categories, std::map<TString, TTree*>& trees, std::map<TString, TTree*>& metaTrees);
 
@@ -51,7 +51,7 @@ int main( int argc, char** argv )
 	double cosThetaStar, cosTheta1, cosTheta2, phi, phi1;
 
 	//Annoyingly, TMVA::Reader can only use floats, not doubles! So, duplicate everything.
-	float abs_cosThetaStar, abs_cosTheta1, abs_cosTheta2, modPhi1, f_phi;	
+	float f_cosThetaStar, abs_cosTheta1, abs_cosTheta2, modPhi1, f_phi;	
 	float f_ptX, f_yX, f_mX, f_cosTheta1, f_cosTheta2;
 	float f_mW12, f_mt12, f_dRW12, f_m12;
 	float f_mW34, f_mt34, f_dRW34, f_m34;
@@ -60,11 +60,11 @@ int main( int argc, char** argv )
 	if(makeTmvaInput) 
 	{
 		fOut = TFile::Open("TMVAInput.root", "RECREATE");
-		outTrees = setupOutputTrees(categories, weight, f_mX, f_yX, f_ptX, f_m12, f_m34, abs_cosThetaStar, f_cosTheta1, f_cosTheta2, f_phi, modPhi1);
+		outTrees = setupOutputTrees(categories, weight, f_mX, f_yX, f_ptX, f_m12, f_m34, f_cosThetaStar, f_cosTheta1, f_cosTheta2, f_phi, modPhi1);
 	}
 	//Initialise the TMVA readers for the top veto and the final kinematic selection
 	TMVA::Reader* topVeto = bookTopVeto(f_mW12, f_mt12, f_mW34, f_mt34);
-	TMVA::Reader* finalMVA = makeTmvaInput ? 0 : bookMelaMVA(f_mX, f_yX, f_ptX, f_m12, f_m34, abs_cosThetaStar, f_cosTheta1, f_cosTheta2, f_phi, modPhi1);
+	TMVA::Reader* finalMVA = makeTmvaInput ? 0 : bookMelaMVA(f_mX, f_yX, f_ptX, f_m12, f_m34, f_cosThetaStar, f_cosTheta1, f_cosTheta2, f_phi, modPhi1);
 
 	LittlePlotter plotter(categories);
 	bookPlots(plotter);
@@ -157,18 +157,18 @@ int main( int argc, char** argv )
 			}
 
 			weight = xsecWeight * treeWeight;
-			abs_cosThetaStar = fabs(cosThetaStar);
-			plotter.fill("dijets_absCosThetaStar", abs_cosThetaStar, weight);
+			plotter.fill("dijets_cosThetaStar", cosThetaStar, weight);
 			plotter.fill("input_m12", m12, weight);
 			plotter.fill("input_m34", m34, weight);
 			if(fabs(m12 - 115) > 25. || fabs(m34 - 110.) > 25.) continue;
-			plotter.fill("dijets_mH_absCosThetaStar", abs_cosThetaStar, weight);
+			plotter.fill("dijets_mH_cosThetaStar", cosThetaStar, weight);
 			f_mW12 = mW12; f_mt12 = mt12; f_dRW12 = dRW12; f_mW34 = mW34; f_mt34 = mt34; f_dRW34 = dRW34;
 			//Apply top veto.
 			float topMVA = topVeto->EvaluateMVA("BDT");
 			plotter.fill("TopVetoBDT", topMVA, weight);
 			if(topMVA < -0.06) continue;
-			plotter.fill("topVeto_absCosThetaStar", abs_cosThetaStar, weight);
+			plotter.fill("topVeto_cosThetaStar", cosThetaStar, weight);
+			f_cosThetaStar = cosThetaStar;
 			f_ptX = ptX; f_mX = mX; f_phi = phi; f_yX = yX;
 			f_m12 = m12; f_m34 = m34;
 			//abs_cosTheta1 = fabs(cosTheta1);
@@ -180,7 +180,7 @@ int main( int argc, char** argv )
 			plotter.fill("mX", mX, weight);
 			plotter.fill("m12", m12, weight);
 			plotter.fill("m34", m34, weight);
-			plotter.fill("absCosThetaStar", abs_cosThetaStar, weight);
+			plotter.fill("cosThetaStar", cosThetaStar, weight);
 			plotter.fill("cosTheta1", cosTheta1, weight);
 			plotter.fill("cosTheta2", cosTheta2, weight);
 			plotter.fill("Phi", phi, weight);
@@ -192,7 +192,7 @@ int main( int argc, char** argv )
 			//if(bdt < 0.0006) continue;
 			if(bdt < 0.0023) continue;
 			plotter.fill("postBDT_m34", m34, weight);
-			plotter.fill("MelaMVA_absCosThetaStar", abs_cosThetaStar, weight);
+			plotter.fill("MelaMVA_cosThetaStar", cosThetaStar, weight);
 		}
 	}
 
@@ -206,9 +206,9 @@ int main( int argc, char** argv )
 	plotter.plotAlone("m12", categories);
 	plotter.plotAlone("m34", categories);
 	plotter.plotAlone("input_m12", categories);
-	plotter.plotAlone("dijets_absCosThetaStar", categories);
+	plotter.plotAlone("dijets_cosThetaStar", categories);
 	plotter.plotAlone("input_m34", categories);
-	plotter.plotAlone("absCosThetaStar", categories);
+	plotter.plotAlone("cosThetaStar", categories);
 	plotter.plotAlone("cosTheta1", categories);
 	plotter.plotAlone("cosTheta2", categories);
 	plotter.plotAlone("Phi", categories);
@@ -268,10 +268,10 @@ void bookPlots(LittlePlotter& plotter)
 	std::cout<<"bookPlots: booking plots now."<< std::endl;
 	plotter.printAllCategories();
 	//These are used for printCutFlow, since they are bounded between 0 & 1 so the integration of the plot is trustworthy.
-	plotter.book(new TH1F("dijets_absCosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, 0., 1.));
-	plotter.book(new TH1F("dijets_mH_absCosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, 0., 1.));
-	plotter.book(new TH1F("topVeto_absCosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, 0., 1.));
-	plotter.book(new TH1F("MelaMVA_absCosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, 0., 1.));
+	plotter.book(new TH1F("dijets_cosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, -1., 1.));
+	plotter.book(new TH1F("dijets_mH_cosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, -1., 1.));
+	plotter.book(new TH1F("topVeto_cosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, 1., 1.));
+	plotter.book(new TH1F("MelaMVA_cosThetaStar", ";|cos(#theta^*)|;Number of Events", 50, 1., 1.));
 	plotter.book(new TH1F("input_m12", ";m_{12} [GeV];Number of Events", 50, 0., 250.));
 	plotter.book(new TH1F("input_m34", ";m_{34} [GeV];Number of Events", 50, 0., 250.));
 	plotter.book(new TH1F("mX", ";m_{X} [GeV];Number of Events", 50, 250., 750.));
@@ -283,7 +283,7 @@ void bookPlots(LittlePlotter& plotter)
 	plotter.book(new TH1F("mW34", ";m_{W,34} [GeV];Number of Events", 50, -100., 150.));
 	plotter.book(new TH1F("mt34", ";m_{t,34} [GeV];Number of Events", 50, -100., 400.));
 	plotter.book(new TH1F("dRW34", ";#DeltaR_{W,34} ;Number of Events", 50, 0., 2.));
-	plotter.book(new TH1F("absCosThetaStar", ";|cos(#theta^{*})|;Number of Events", 50, 0., 1.));
+	plotter.book(new TH1F("cosThetaStar", ";|cos(#theta^{*})|;Number of Events", 50, -1., 1.));
 	plotter.book(new TH1F("cosTheta1", ";cos(#theta^{1});Number of Events", 50, -1., 1.));
 	plotter.book(new TH1F("cosTheta2", ";cos(#theta^{2});Number of Events", 50, -1., 1.));
 	plotter.book(new TH1F("Phi", ";#Phi;Number of Events", 50, -M_PI, M_PI));
@@ -306,7 +306,7 @@ TMVA::Reader* bookTopVeto(float& f_mW12, float& f_mt12, float& f_mW34, float& f_
 	topVeto->BookMVA("BDT", "TopVetoWeights/TMVAClassification_BDT.weights.xml");
 	return topVeto;
 }
-TMVA::Reader* bookMelaMVA(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& abs_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1)
+TMVA::Reader* bookMelaMVA(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& f_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1)
 {
 	TMVA::Reader* reader = new TMVA::Reader( "!Color:!Silent" );
 	reader->AddVariable("mX", &f_mX);
@@ -314,7 +314,7 @@ TMVA::Reader* bookMelaMVA(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, 
 	reader->AddVariable("ptX", &f_ptX);
 	reader->AddVariable("m12", &f_m12);
 	reader->AddVariable("m34", &f_m34);
-	reader->AddVariable("absCosThetaStar", &abs_cosThetaStar);
+	reader->AddVariable("cosThetaStar", &f_cosThetaStar);
 	reader->AddVariable("cosTheta1", &f_cosTheta1);
 	reader->AddVariable("cosTheta2", &f_cosTheta2);
 	reader->AddVariable("Phi", &f_phi);
@@ -335,14 +335,14 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
 		std::cout <<" & "<< *cat;
 	}
 	std::cout<<" \\\\\\hline"<< std::endl;
-	TString plotName = "dijets_absCosThetaStar";
+	TString plotName = "dijets_cosThetaStar";
 	std::cout<<"2 dijets"; 
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
 		std::cout<<" & "<< formatNumberForTable(plotter.getPlot(plotName, *cat)->Integral());
 	}
 	std::cout<<"\\\\"<< std::endl;
-	plotName = "dijets_mH_absCosThetaStar";
+	plotName = "dijets_mH_cosThetaStar";
 	std::cout<<"2 dijets $m_H$"; 
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
@@ -350,7 +350,7 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
 	}
 	std::cout<<"\\\\"<< std::endl;
 	//plotName = "BDT";
-	plotName = "topVeto_absCosThetaStar";
+	plotName = "topVeto_cosThetaStar";
 	std::cout<<"Top Veto"; 
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
@@ -358,7 +358,7 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
 	}
 	std::cout<<"\\\\"<< std::endl;
 	std::cout<<"MVA"; 
-	plotName = "MelaMVA_absCosThetaStar";
+	plotName = "MelaMVA_cosThetaStar";
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
 		std::cout<<" & "<< formatNumberForTable(plotter.getPlot(plotName, *cat)->Integral());
@@ -370,7 +370,7 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
 	std::cout<<"\\begin{table}[t]\\begin{center}\\begin{tabular}{lcccc}"<<std::endl;
 	std::cout<<"Requirement & $S$ & $B$ & $S/B$ & $S/\\sqrt{B}$\\\\\\hline";
 	std::cout<<" \\\\\\hline"<< std::endl;
-	plotName = "dijets_absCosThetaStar";
+	plotName = "dijets_cosThetaStar";
 	float sig = 0.; float back = 0.;
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
@@ -389,7 +389,7 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
 	std::cout<<"2 dijets $m_H$ & "<< formatNumberForTable(sig) <<" & "<< formatNumberForTable(back) <<" & "<< formatNumberForTable(sig/back) <<" & "<< formatNumberForTable(sig/sqrt(back)); 
 	std::cout<<"\\\\"<< std::endl;
 	//plotName = "BDT";
-	plotName = "absCosThetaStar";
+	plotName = "cosThetaStar";
 	back = 0.;
 	for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
 	{
@@ -411,7 +411,7 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
 }
 std::map<TString, TTree*> setupOutputTrees(const std::vector<TString>& categories, float& weight,
 												float& f_mX, float& f_yX, float& f_ptX, 
-												float& f_m12, float& f_m34, float& abs_cosThetaStar, 
+												float& f_m12, float& f_m34, float& f_cosThetaStar, 
 												float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1)
 {
 	std::map<TString, TTree*> outTrees;
@@ -424,7 +424,7 @@ std::map<TString, TTree*> setupOutputTrees(const std::vector<TString>& categorie
 		outTrees[*catIt]->Branch("ptX", &f_ptX, "ptX/F");
 		outTrees[*catIt]->Branch("m12", &f_m12, "m12/F");
 		outTrees[*catIt]->Branch("m34", &f_m34, "m34/F");
-		outTrees[*catIt]->Branch("absCosThetaStar", &abs_cosThetaStar, "absCosThetaStar/F");
+		outTrees[*catIt]->Branch("cosThetaStar", &f_cosThetaStar, "cosThetaStar/F");
 		outTrees[*catIt]->Branch("Phi", &f_phi, "Phi/F");
 		outTrees[*catIt]->Branch("modPhi1", &modPhi1, "modPhi1/F");
 		outTrees[*catIt]->Branch("cosTheta1", &f_cosTheta1, "cosTheta1/F");

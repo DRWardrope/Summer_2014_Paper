@@ -183,7 +183,7 @@ int main( int argc, char** argv )
    factory->AddVariable( "ptX",                "pt_{X}", "GeV", 'D' );
    factory->AddVariable( "m12",                "m_{12}", "GeV", 'D' );
    factory->AddVariable( "m34",                "m_{34}", "GeV", 'D' );
-   factory->AddVariable( "absCosThetaStar",                "|cos(#Theta*)|", "", 'D' );
+   factory->AddVariable( "cosThetaStar",                "cos(#Theta*)", "", 'D' );
    factory->AddVariable( "cosTheta1",                "|cos(#theta_{1})|", "", 'D' );
    factory->AddVariable( "cosTheta2",                "|cos(#theta_{2})|", "", 'D' );
    factory->AddVariable( "Phi",                "#Phi", "", 'D' );
