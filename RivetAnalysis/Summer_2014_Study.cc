@@ -43,6 +43,7 @@ namespace Rivet {
 				//_crossSection = handler().crossSection();
 				FinalStateWithGhosts fs(-5.0, 5.0);
 				fs.ghostIdPair(PID::BQUARK);
+				fs.ghostIdPair(PID::TAU);
 				addProjection(fs, "FS");
 
 				FastJets akt4(fs, FastJets::ANTIKT, 0.4);
