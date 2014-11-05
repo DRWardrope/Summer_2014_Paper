@@ -161,16 +161,17 @@ void LittlePlotter::plotOverlay(TString plotName, std::vector<TString>& categori
 	//cOverNorm->SaveAs(m_outputDir+TString("/")+plots[0]->GetName()+TString("_norm.eps"));
 	delete cOver; delete cOverNorm;
 }
-void LittlePlotter::plotBeforeAfter(TString plotNameBefore, TString plotNameAfter, std::vector<TString>& categories, bool includeScaled)
-{ //Modified from plotStack, for overlays of before and after top veto
+void LittlePlotter::plotBeforeAfter(TString plotNameBefore, TString plotNameAfter, std::vector<TString>& categories, bool includeScaled, bool includeCompare)
+{ //Modified from plotStack, for overlays of before and after top veto. Ratio plotting code modified from code suppiled by David via email
     std::vector<TH1F*> beforePlots = getPlots(plotNameBefore, categories);
     std::vector<TH1F*> afterPlots = getPlots(plotNameAfter, categories);
 
+    const int ratioCol = kRed; //colour for points in ratio/secondary plots
     const double Y_Offset = 1.5; //Offset for y axis label, change as you see fit
     
     for(size_t i = 0; i < beforePlots.size(); ++i)
     {
-        TCanvas* cStack = new TCanvas("cStack", "Before & After Top Veto Plots", 800, 600);
+        TCanvas* cStack = new TCanvas("cStack", "Before & After Top Veto Plots + Ratio", 800, 800);
         TLegend leg(0.77, 0.80, 0.90, 0.89);
         leg.SetBorderSize(0);
         leg.SetFillColorAlpha(0,0);
@@ -189,6 +190,19 @@ void LittlePlotter::plotBeforeAfter(TString plotNameBefore, TString plotNameAfte
         afterPlot->SetLineWidth(1);
         leg.AddEntry(afterPlot, legendName("After"), "F");
         
+        TPad* pad0 = new TPad("pad0", "pad0", 0.0, 0.3, 1., 1.);
+        pad0->Draw();
+        pad0->cd();
+        TH1F* h1 = (TH1F*) beforePlot->Clone();
+        TH1F* h2 = (TH1F*) afterPlot->Clone();
+        
+        h1->Sumw2();
+        TH1F* g2 = (TH1F*) h2->Clone();
+        g2->SetName("g2");
+        g2->Sumw2();
+        g2->Divide(h1);
+        g2->GetYaxis()->SetTitle("After/Before");
+        
         if(afterPlot->GetMaximum() > beforePlot->GetMaximum()) {
             afterPlot->Draw("HIST");
             afterPlot->GetXaxis()->SetTitle(beforePlot->GetXaxis()->GetTitle());
@@ -206,6 +220,22 @@ void LittlePlotter::plotBeforeAfter(TString plotNameBefore, TString plotNameAfte
         }
         
         leg.Draw();
+        
+        cStack->cd();
+        TPad* pad1 = new TPad("pad1", "pad1", 0.0, 0.0, 1., 0.3);
+        pad1->Draw();
+        pad1->cd();
+        float binWidthX = g2->GetXaxis()->GetBinWidth(1);
+        TLine l_zero(g2->GetXaxis()->GetFirst()*binWidthX, 1.,g2->GetXaxis()->GetLast()*binWidthX , 1.);
+        g2->SetMarkerStyle(21);
+        g2->SetMarkerColor(ratioCol);
+        l_zero.SetLineStyle(2);
+        pad1->SetBottomMargin(0.2);
+        double axisRange = 1.5;
+        g2->Draw("PE");
+        pad1->Modified();
+        l_zero.Draw();
+        
         cStack->SaveAs(m_outputDir+TString("/BeforeAfter/")+afterPlot->GetName()+TString("_BeforeAfter.pdf"));
         //cStack->SaveAs(m_outputDir+TString("/BeforeAfter/")+afterPlot->GetName()+TString("_BeforeAfter.eps"));
         delete cStack;
@@ -213,42 +243,144 @@ void LittlePlotter::plotBeforeAfter(TString plotNameBefore, TString plotNameAfte
         //Plots a scaled/normalised version of both histograms overlayed - code repeated so you can specify
         //different colours and formatting as opposed to the non-normalised version
         if (includeScaled) {
-            TCanvas* cStackScaled = new TCanvas("cStackScaled", "Scaled Before & After Top Veto Plots", 800, 600);
+            TCanvas* cStackScaled = new TCanvas("cStackScaled", "Scaled Before & After Top Veto Plots + Difference", 800, 800);
             
-            beforePlot->SetLineColor(kRed);
-            beforePlot->SetFillStyle(3335);
-            beforePlot->SetFillColor(kRed);
-            beforePlot->Scale(1./beforePlot->Integral());
+            TH1F* beforePlotScaled = (TH1F*) beforePlot->Clone();
+            TH1F* afterPlotScaled = (TH1F*) afterPlot->Clone();
             
-            afterPlot->SetLineColor(kBlack);
-            afterPlot->SetFillColor(kCyan);
-            afterPlot->Scale(1./afterPlot->Integral());
+            beforePlotScaled->SetLineColor(kRed);
+            beforePlotScaled->SetFillStyle(3335);
+            beforePlotScaled->SetFillColor(kRed);
+            beforePlotScaled->Scale(1./beforePlotScaled->Integral());
             
-            if(afterPlot->GetMaximum() > beforePlot->GetMaximum()) {
-                afterPlot->Draw("HIST");
-                afterPlot->GetXaxis()->SetTitle(beforePlot->GetXaxis()->GetTitle());
-                afterPlot->GetYaxis()->SetTitle("Arbitrary Units");
-                afterPlot->GetYaxis()->SetTitleOffset(Y_Offset);
-                beforePlot->Draw("sameHIST");
+            afterPlotScaled->SetLineColor(kBlack);
+            afterPlotScaled->SetFillColor(kCyan);
+            afterPlotScaled->Scale(1./afterPlotScaled->Integral());
+            
+            TPad* pad0 = new TPad("pad0", "pad0", 0.0, 0.3, 1., 1.);
+            pad0->Draw();
+            pad0->cd();
+            TH1F* h1 = (TH1F*) beforePlotScaled->Clone();
+            TH1F* h2 = (TH1F*) afterPlotScaled->Clone();
+            
+            TH1F* g2 = (TH1F*) h2->Clone();
+            g2->SetName("g2");
+            g2->Add(h1,-1);
+            g2->GetYaxis()->SetTitle("Scaled: (After - Before) [NOT WEIGHTED]");
+            
+            if(afterPlotScaled->GetMaximum() > beforePlotScaled->GetMaximum()) {
+                afterPlotScaled->Draw("HIST");
+                afterPlotScaled->GetXaxis()->SetTitle(beforePlotScaled->GetXaxis()->GetTitle());
+                afterPlotScaled->GetYaxis()->SetTitle("Arbitrary Units");
+                afterPlotScaled->GetYaxis()->SetTitleOffset(Y_Offset);
+                beforePlotScaled->Draw("sameHIST");
             }
             else {
-                beforePlot->Draw("HIST");
-                beforePlot->GetXaxis()->SetTitle(beforePlot->GetXaxis()->GetTitle());
-                beforePlot->GetYaxis()->SetTitle("Arbitrary Units");
-                beforePlot->GetYaxis()->SetTitleOffset(Y_Offset);
-                afterPlot->Draw("sameHIST");
-                beforePlot->Draw("sameHIST");
+                beforePlotScaled->Draw("HIST");
+                beforePlotScaled->GetXaxis()->SetTitle(beforePlotScaled->GetXaxis()->GetTitle());
+                beforePlotScaled->GetYaxis()->SetTitle("Arbitrary Units");
+                beforePlotScaled->GetYaxis()->SetTitleOffset(Y_Offset);
+                afterPlotScaled->Draw("sameHIST");
+                beforePlotScaled->Draw("sameHIST");
             }
             
             leg.Draw();
-            cStackScaled->SaveAs(m_outputDir+TString("/BeforeAfter/")+afterPlot->GetName()+TString("_BeforeAfterScaled.pdf"));
-            //cStack->SaveAs(m_outputDir+TString("/BeforeAfter/")+afterPlot->GetName()+TString("_BeforeAfterScaled.eps"));
+            
+            cStackScaled->cd();
+            TPad* pad1 = new TPad("pad1", "pad1", 0.0, 0.0, 1., 0.3);
+            pad1->Draw();
+            pad1->cd();
+            float binWidthX = g2->GetXaxis()->GetBinWidth(1);
+            TLine l_zero(g2->GetXaxis()->GetFirst()*binWidthX, 1.,g2->GetXaxis()->GetLast()*binWidthX , 1.);
+            g2->SetMarkerStyle(21);
+            g2->SetMarkerColor(ratioCol);
+            l_zero.SetLineStyle(2);
+            pad1->SetBottomMargin(0.2);
+            double axisRange = 1.5;
+            g2->Draw("PE");
+            pad1->Modified();
+            l_zero.Draw();
+
+            cStackScaled->SaveAs(m_outputDir+TString("/BeforeAfter/")+afterPlotScaled->GetName()+TString("_BeforeAfterScaled.pdf"));
+            //cStack->SaveAs(m_outputDir+TString("/BeforeAfter/")+afterPlotScaled->GetName()+TString("_BeforeAfterScaled.eps"));
             delete cStackScaled;
         }
         
-        
+        if (includeCompare) { //Plots scaled histograms + ratio of non-scaled in secondary plot
+            TCanvas* cStackCompare = new TCanvas("cStackCompare", "Scaled Before & After Top Veto Plots + Ratio (not-normalised)", 800, 800);
+            
+            TH1F* beforePlotScaled = (TH1F*) beforePlot->Clone();
+            TH1F* afterPlotScaled = (TH1F*) afterPlot->Clone();
+            
+            beforePlotScaled->SetLineColor(kRed);
+            beforePlotScaled->SetFillStyle(3335);
+            beforePlotScaled->SetFillColor(kRed);
+            beforePlotScaled->Scale(1./beforePlotScaled->Integral());
+            
+            afterPlotScaled->SetLineColor(kBlack);
+            afterPlotScaled->SetFillColor(kCyan);
+            afterPlotScaled->Scale(1./afterPlotScaled->Integral());
+            
+            TPad* pad0 = new TPad("pad0", "pad0", 0.0, 0.3, 1., 1.);
+            pad0->Draw();
+            pad0->cd();
+            TH1F* h1 = (TH1F*) beforePlot->Clone();
+            TH1F* h2 = (TH1F*) afterPlot->Clone();
+            
+            h1->Sumw2();
+            TH1F* g2 = (TH1F*) h2->Clone();
+            g2->SetName("g2");
+            g2->Sumw2();
+            g2->Divide(h1);
+            g2->GetYaxis()->SetTitle("After/Before");
+            
+            if(afterPlotScaled->GetMaximum() > beforePlotScaled->GetMaximum()) {
+                afterPlotScaled->Draw("HIST");
+                afterPlotScaled->GetXaxis()->SetTitle(beforePlotScaled->GetXaxis()->GetTitle());
+                afterPlotScaled->GetYaxis()->SetTitle("Arbitrary Units");
+                afterPlotScaled->GetYaxis()->SetTitleOffset(Y_Offset);
+                beforePlotScaled->Draw("sameHIST");
+            }
+            else {
+                beforePlotScaled->Draw("HIST");
+                beforePlotScaled->GetXaxis()->SetTitle(beforePlotScaled->GetXaxis()->GetTitle());
+                beforePlotScaled->GetYaxis()->SetTitle("Arbitrary Units");
+                beforePlotScaled->GetYaxis()->SetTitleOffset(Y_Offset);
+                afterPlotScaled->Draw("sameHIST");
+                beforePlotScaled->Draw("sameHIST");
+            }
+            
+            leg.Draw();
+            
+            cStackCompare->cd();
+            TPad* pad1 = new TPad("pad1", "pad1", 0.0, 0.0, 1., 0.3);
+            pad1->Draw();
+            pad1->cd();
+            float binWidthX = g2->GetXaxis()->GetBinWidth(1);
+            TLine l_zero(g2->GetXaxis()->GetFirst()*binWidthX, 1.,g2->GetXaxis()->GetLast()*binWidthX , 1.);
+            g2->SetMarkerStyle(21);
+            g2->SetMarkerColor(ratioCol);
+            l_zero.SetLineStyle(2);
+            pad1->SetBottomMargin(0.2);
+            double axisRange = 1.5;
+            g2->Draw("PE");
+            pad1->Modified();
+            l_zero.Draw();
+            
+            cStackCompare->SaveAs(m_outputDir+TString("/BeforeAfter/")+afterPlotScaled->GetName()+TString("_BeforeAfterCompare.pdf"));
+            //cStack->SaveAs(m_outputDir+TString("/BeforeAfter/")+afterPlotScaled->GetName()+TString("_BeforeAfterCompare.eps"));
+            delete cStackCompare;
+        }
     }
 }
+
+
+
+
+
+
+
+
 void LittlePlotter::plotSoBVsEff(TString plotName, std::vector<TString>& signals, std::vector<TString>& backgrounds)
 {
 	std::vector<TH1F*> sigPlots = getPlots(plotName, signals);
