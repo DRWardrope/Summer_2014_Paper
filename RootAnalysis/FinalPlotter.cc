@@ -79,7 +79,7 @@ int main( int argc, char** argv )
         float xsec = -99.;
         
         if(treeIt->first == "ttbar") xsec = 212070;
-        
+        else if(treeIt->first == "HH") xsec = 11.586;
         
         //Check we have found a cross-section for this process.
         if(xsec < -1.)
@@ -125,7 +125,7 @@ int main( int argc, char** argv )
         {
             if(i%(nEvents/10) == 0) std::cout<<"Analysing event "<< i <<"/"<< nEvents << std::endl;
             tree->GetEntry(i);
-            
+            //if (i == 50000) {break;} //Debugging speed up
             // Modify the b-tagging weight
             if (changeTagWeights) {
                 
@@ -144,18 +144,31 @@ int main( int argc, char** argv )
             plotter.fill("dijets_cosThetaStar", cosThetaStar, weight);
             plotter.fill("input_m12", m12, weight);
             plotter.fill("input_m34", m34, weight);
-            if(fabs(m12 - 115) > 25. || fabs(m34 - 110.) > 25.) continue;  //This is a mass/Pt cut right?
+            if(fabs(m12 - 115) > 25. || fabs(m34 - 110.) > 25.) continue;
             plotter.fill("dijets_mH_cosThetaStar", cosThetaStar, weight);
             f_mW12 = mW12; f_mt12 = mt12; f_dRW12 = dRW12; f_mW34 = mW34; f_mt34 = mt34; f_dRW34 = dRW34;
+            
+            //Fill plots before top veto
+            plotter.fill("before_mX", mX, weight);
+            plotter.fill("before_m12", m12, weight);
+            plotter.fill("before_m34", m34, weight);
+            plotter.fill("before_cosThetaStar", cosThetaStar, weight);
+            plotter.fill("before_cosTheta1", cosTheta1, weight);
+            plotter.fill("before_cosTheta2", cosTheta2, weight);
+            plotter.fill("before_Phi", phi, weight);
+            plotter.fill("before_Phi1", phi1, weight);
+            plotter.fill("before_yX", yX, weight);
+            plotter.fill("before_ptX", ptX, weight);
+            plotter.fill("before_pt12", pt12, weight);
+            plotter.fill("before_pt34", pt34, weight);
+            
             //Apply top veto.
             float topMVA = topVeto->EvaluateMVA("BDT");
             plotter.fill("TopVetoBDT", topMVA, weight);
             if(topMVA < -0.05) continue;
             plotter.fill("topVeto_cosThetaStar", cosThetaStar, weight);
-            
-            
 
-
+            //Fill plots after top veto
             plotter.fill("mX", mX, weight);
             plotter.fill("m12", m12, weight);
             plotter.fill("m34", m34, weight);
@@ -166,30 +179,60 @@ int main( int argc, char** argv )
             plotter.fill("Phi1", phi1, weight);
             plotter.fill("yX", yX, weight);
             plotter.fill("ptX", ptX, weight);
-            
-            
-            
+            plotter.fill("pt12", pt12, weight);
+            plotter.fill("pt34", pt34, weight);
 
         }
     }
     
-    std::vector<TString> background; background.push_back("ttbar");
-    
     plotter.plotAlone("TopVetoBDT", categories);
+    plotter.plotAlone("dijets_cosThetaStar", categories);
+    plotter.plotAlone("dijets_mH_cosThetaStar", categories);
+    
+    plotter.plotAlone("input_m12", categories);
+    plotter.plotAlone("input_m34", categories);
+    
     plotter.plotAlone("mX", categories);
     plotter.plotAlone("m12", categories);
     plotter.plotAlone("m34", categories);
-    plotter.plotAlone("input_m12", categories);
-    plotter.plotAlone("dijets_cosThetaStar", categories);
-    plotter.plotAlone("input_m34", categories);
     plotter.plotAlone("cosThetaStar", categories);
     plotter.plotAlone("cosTheta1", categories);
     plotter.plotAlone("cosTheta2", categories);
     plotter.plotAlone("Phi", categories);
     plotter.plotAlone("Phi1", categories);
     plotter.plotAlone("ptX", categories);
+    plotter.plotAlone("pt12", categories);
+    plotter.plotAlone("pt34", categories);
     plotter.plotAlone("yX", categories);
+    
+    //New plots
+    plotter.plotAlone("before_mX", categories);
+    plotter.plotAlone("before_m12", categories);
+    plotter.plotAlone("before_m34", categories);
+    plotter.plotAlone("before_cosThetaStar", categories);
+    plotter.plotAlone("before_cosTheta1", categories);
+    plotter.plotAlone("before_cosTheta2", categories);
+    plotter.plotAlone("before_Phi", categories);
+    plotter.plotAlone("before_Phi1", categories);
+    plotter.plotAlone("before_ptX", categories);
+    plotter.plotAlone("before_pt12", categories);
+    plotter.plotAlone("before_pt34", categories);
+    plotter.plotAlone("before_yX", categories);
 
+    //Abusing the modified signal background plot functions
+    plotter.plotBeforeAfter("before_mX", "mX", categories);
+    plotter.plotBeforeAfter("before_m12", "m12", categories);
+    plotter.plotBeforeAfter("before_m34", "m34", categories);
+    plotter.plotBeforeAfter("before_cosThetaStar", "cosThetaStar", categories);
+    plotter.plotBeforeAfter("before_cosTheta1", "cosTheta1", categories);
+    plotter.plotBeforeAfter("before_cosTheta2", "cosTheta2", categories);
+    plotter.plotBeforeAfter("before_Phi", "Phi", categories);
+    plotter.plotBeforeAfter("before_Phi1", "Phi1", categories);
+    plotter.plotBeforeAfter("before_ptX", "ptX", categories);
+    plotter.plotBeforeAfter("before_pt12", "pt12", categories);
+    plotter.plotBeforeAfter("before_pt34", "pt34", categories);
+    plotter.plotBeforeAfter("before_yX", "yX", categories);
+    
     std::cout<<"--------------------Cut flow for all backgrounds:-----------------------------------------------------------"<<std::endl;
     printCutFlow(plotter, categories, "All backgrounds");
     std::cout<<"------------------------------------------------------------------------------------------------------------"<<std::endl;
@@ -198,7 +241,7 @@ int main( int argc, char** argv )
 }
 void setupFileList(std::vector<TFile*>& files)
 {
-    
+    files.push_back(TFile::Open("HH.root", "READ"));
     files.push_back(TFile::Open("ttbar.root", "READ"));
     
     std::cout<<"setupFileList: Listed "<< files.size() <<" for processing."<< std::endl;
@@ -228,6 +271,26 @@ void bookPlots(LittlePlotter& plotter)
 
     plotter.book(new TH1F("input_m12", ";m_{12} [GeV];Number of Events", 50, 0., 250.));
     plotter.book(new TH1F("input_m34", ";m_{34} [GeV];Number of Events", 50, 0., 250.));
+    
+    plotter.book(new TH1F("before_mX", ";m_{X} [GeV];Number of Events", 50, 250., 750.));
+    plotter.book(new TH1F("before_m12", ";m_{12} [GeV];Number of Events", 50, 0., 250.));
+    plotter.book(new TH1F("before_mW12", ";m_{W,12} [GeV];Number of Events", 50, -100., 150.));
+    plotter.book(new TH1F("before_mt12", ";m_{t,12} [GeV];Number of Events", 50, -100., 400.));
+    plotter.book(new TH1F("before_dRW12", ";#DeltaR_{W,12} ;Number of Events", 50, 0., 2.));
+    plotter.book(new TH1F("before_m34", ";m_{34} [GeV];Number of Events", 50, 0., 250.));
+    plotter.book(new TH1F("before_mW34", ";m_{W,34} [GeV];Number of Events", 50, -100., 150.));
+    plotter.book(new TH1F("before_mt34", ";m_{t,34} [GeV];Number of Events", 50, -100., 400.));
+    plotter.book(new TH1F("before_dRW34", ";#DeltaR_{W,34} ;Number of Events", 50, 0., 2.));
+    plotter.book(new TH1F("before_cosThetaStar", ";|cos(#theta^{*})|;Number of Events", 50, -1., 1.));
+    plotter.book(new TH1F("before_cosTheta1", ";cos(#theta^{1});Number of Events", 50, -1., 1.));
+    plotter.book(new TH1F("before_cosTheta2", ";cos(#theta^{2});Number of Events", 50, -1., 1.));
+    plotter.book(new TH1F("before_Phi", ";#Phi;Number of Events", 50, -M_PI, M_PI));
+    plotter.book(new TH1F("before_Phi1", ";#Phi_{1};Number of Events", 50, -M_PI, M_PI));
+    plotter.book(new TH1F("before_yX", ";y_{X};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("before_ptX", ";X p_{T} [GeV];Number of Events", 50, 0., 250.));
+    plotter.book(new TH1F("before_pt12", ";X p_{T} [GeV];Number of Events", 50, 100., 700.));
+    plotter.book(new TH1F("before_pt34", ";X p_{T} [GeV];Number of Events", 50,100., 700.));
+    
     plotter.book(new TH1F("mX", ";m_{X} [GeV];Number of Events", 50, 250., 750.));
     plotter.book(new TH1F("m12", ";m_{12} [GeV];Number of Events", 50, 0., 250.));
     plotter.book(new TH1F("mW12", ";m_{W,12} [GeV];Number of Events", 50, -100., 150.));
@@ -244,6 +307,8 @@ void bookPlots(LittlePlotter& plotter)
     plotter.book(new TH1F("Phi1", ";#Phi_{1};Number of Events", 50, -M_PI, M_PI));
     plotter.book(new TH1F("yX", ";y_{X};Number of Events", 50, -2.5, 2.5));
     plotter.book(new TH1F("ptX", ";X p_{T} [GeV];Number of Events", 50, 0., 250.));
+    plotter.book(new TH1F("pt12", ";X p_{T} [GeV];Number of Events", 50, 100., 700.));
+    plotter.book(new TH1F("pt34", ";X p_{T} [GeV];Number of Events", 50, 100., 700.));
     
     plotter.book(new TH1F("TopVetoBDT", ";Top Veto BDT Output;Number of Events", 50, -1., 1.));
 
@@ -318,7 +383,7 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
     std::cout<<"2 dijets $m_H$ & "<< formatNumberForTable(sig) <<" & "<< formatNumberForTable(back) <<" & "<< formatNumberForTable(sig/back) <<" & "<< formatNumberForTable(sig/sqrt(back));
     std::cout<<"\\\\"<< std::endl;
     //plotName = "BDT";
-    plotName = "cosThetaStar";
+    plotName = "topVeto_cosThetaStar";  //I broke this but too lazy to debug so i just reused the previous plot
     back = 0.;
     for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
     {

@@ -160,7 +160,95 @@ void LittlePlotter::plotOverlay(TString plotName, std::vector<TString>& categori
 	cOverNorm->SaveAs(m_outputDir+TString("/")+plots[0]->GetName()+TString("_norm.pdf"));
 	//cOverNorm->SaveAs(m_outputDir+TString("/")+plots[0]->GetName()+TString("_norm.eps"));
 	delete cOver; delete cOverNorm;
-} 
+}
+void LittlePlotter::plotBeforeAfter(TString plotNameBefore, TString plotNameAfter, std::vector<TString>& categories, bool includeScaled)
+{ //Modified from plotStack, for overlays of before and after top veto
+    std::vector<TH1F*> beforePlots = getPlots(plotNameBefore, categories);
+    std::vector<TH1F*> afterPlots = getPlots(plotNameAfter, categories);
+
+    const double Y_Offset = 1.5; //Offset for y axis label, change as you see fit
+    
+    for(size_t i = 0; i < beforePlots.size(); ++i)
+    {
+        TCanvas* cStack = new TCanvas("cStack", "Before & After Top Veto Plots", 800, 600);
+        TLegend leg(0.77, 0.80, 0.90, 0.89);
+        leg.SetBorderSize(0);
+        leg.SetFillColorAlpha(0,0);
+        leg.SetTextSize(0.03);
+        
+        TH1F* beforePlot = beforePlots[i];
+        beforePlot->SetLineColor(kRed);
+        beforePlot->SetFillStyle(3335);
+        beforePlot->SetFillColor(kRed);
+        beforePlot->SetLineWidth(1);
+        leg.AddEntry(beforePlot, legendName("Before"), "F");
+        
+        TH1F* afterPlot = afterPlots[i];
+        afterPlot->SetLineColor(kBlack);
+        afterPlot->SetFillColor(kCyan);
+        afterPlot->SetLineWidth(1);
+        leg.AddEntry(afterPlot, legendName("After"), "F");
+        
+        if(afterPlot->GetMaximum() > beforePlot->GetMaximum()) {
+            afterPlot->Draw("HIST");
+            afterPlot->GetXaxis()->SetTitle(beforePlot->GetXaxis()->GetTitle());
+            afterPlot->GetYaxis()->SetTitle(beforePlot->GetYaxis()->GetTitle());
+            afterPlot->GetYaxis()->SetTitleOffset(Y_Offset);
+            beforePlot->Draw("sameHIST");
+        }
+        else {
+            beforePlot->Draw("HIST");
+            beforePlot->GetXaxis()->SetTitle(beforePlot->GetXaxis()->GetTitle());
+            beforePlot->GetYaxis()->SetTitle(beforePlot->GetYaxis()->GetTitle());
+            beforePlot->GetYaxis()->SetTitleOffset(Y_Offset);
+            afterPlot->Draw("sameHIST");
+            beforePlot->Draw("sameHIST");
+        }
+        
+        leg.Draw();
+        cStack->SaveAs(m_outputDir+TString("/BeforeAfter/")+afterPlot->GetName()+TString("_BeforeAfter.pdf"));
+        //cStack->SaveAs(m_outputDir+TString("/BeforeAfter/")+afterPlot->GetName()+TString("_BeforeAfter.eps"));
+        delete cStack;
+        
+        //Plots a scaled/normalised version of both histograms overlayed - code repeated so you can specify
+        //different colours and formatting as opposed to the non-normalised version
+        if (includeScaled) {
+            TCanvas* cStackScaled = new TCanvas("cStackScaled", "Scaled Before & After Top Veto Plots", 800, 600);
+            
+            beforePlot->SetLineColor(kRed);
+            beforePlot->SetFillStyle(3335);
+            beforePlot->SetFillColor(kRed);
+            beforePlot->Scale(1./beforePlot->Integral());
+            
+            afterPlot->SetLineColor(kBlack);
+            afterPlot->SetFillColor(kCyan);
+            afterPlot->Scale(1./afterPlot->Integral());
+            
+            if(afterPlot->GetMaximum() > beforePlot->GetMaximum()) {
+                afterPlot->Draw("HIST");
+                afterPlot->GetXaxis()->SetTitle(beforePlot->GetXaxis()->GetTitle());
+                afterPlot->GetYaxis()->SetTitle("Arbitrary Units");
+                afterPlot->GetYaxis()->SetTitleOffset(Y_Offset);
+                beforePlot->Draw("sameHIST");
+            }
+            else {
+                beforePlot->Draw("HIST");
+                beforePlot->GetXaxis()->SetTitle(beforePlot->GetXaxis()->GetTitle());
+                beforePlot->GetYaxis()->SetTitle("Arbitrary Units");
+                beforePlot->GetYaxis()->SetTitleOffset(Y_Offset);
+                afterPlot->Draw("sameHIST");
+                beforePlot->Draw("sameHIST");
+            }
+            
+            leg.Draw();
+            cStackScaled->SaveAs(m_outputDir+TString("/BeforeAfter/")+afterPlot->GetName()+TString("_BeforeAfterScaled.pdf"));
+            //cStack->SaveAs(m_outputDir+TString("/BeforeAfter/")+afterPlot->GetName()+TString("_BeforeAfterScaled.eps"));
+            delete cStackScaled;
+        }
+        
+        
+    }
+}
 void LittlePlotter::plotSoBVsEff(TString plotName, std::vector<TString>& signals, std::vector<TString>& backgrounds)
 {
 	std::vector<TH1F*> sigPlots = getPlots(plotName, signals);

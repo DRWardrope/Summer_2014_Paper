@@ -26,7 +26,8 @@ class LittlePlotter
 		void plotAlone(TString plotName, std::vector<TString>& categories);
 		void plotOverlay(TString plotName, std::vector<TString>& categories);
 		void plotStack(TString plotName, std::vector<TString>& signal, std::vector<TString>& background, bool sigAtBottom=false);
-		void plotSoBVsEff(TString plotName,std::vector<TString>& signal, std::vector<TString>& background);
+		void plotBeforeAfter(TString plotNameBefore, TString plotNameAfter, std::vector<TString>& categories, bool includeScaled = true); //NEW CUSTOM FUNCTION
+        void plotSoBVsEff(TString plotName,std::vector<TString>& signal, std::vector<TString>& background);
 		void printAllCategories();
 		void printAllPlotNames();
 		void scalePlots(TString plotName, std::vector<TString>& categories, std::map<TString,float>& numerator, std::map<TString,float>& denominator);
