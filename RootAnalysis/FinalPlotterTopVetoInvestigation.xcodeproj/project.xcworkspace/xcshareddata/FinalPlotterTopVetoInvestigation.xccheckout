@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>69974EC8-DEAE-426B-859D-415C72588A0A</string>
+	<key>IDESourceControlProjectName</key>
+	<string>FinalPlotterTopVetoInvestigation</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>DA1B5C3BE7C815F3322E6CD15A80C218C407B875</key>
+		<string>https://github.com/DRWardrope/Summer_2014_Paper.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>RootAnalysis/FinalPlotterTopVetoInvestigation.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>DA1B5C3BE7C815F3322E6CD15A80C218C407B875</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/DRWardrope/Summer_2014_Paper.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>DA1B5C3BE7C815F3322E6CD15A80C218C407B875</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>DA1B5C3BE7C815F3322E6CD15A80C218C407B875</string>
+			<key>IDESourceControlWCCName</key>
+			<string>Summer_2014_Paper</string>
+		</dict>
+	</array>
+</dict>
+</plist>
