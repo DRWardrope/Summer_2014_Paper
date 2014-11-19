@@ -63,6 +63,60 @@ class FinalStateWithGhosts : public FinalState {
     private:
         set<PdgId> _pids;
 };
+    //Adapted from FinalStateWithGhosts, allows you to extract all particles from event if you supply a pid.
+    //There's no real point to inherit from FinalState but it works for now so let's leave it.
+    class pidFinder : public FinalState {
+        
+    public:
+        
+        /**
+         * Constructor. Accepts an eta range and a minimal pT.
+         */
+        pidFinder(double mineta = -100000,
+                             double maxeta = 100000,
+                             double minpt = 0.0*GeV)
+        : FinalState(mineta, maxeta, minpt) {}
+        
+        /**
+         * Clone this projection.
+         */
+        virtual const Projection *clone() const {
+            return new pidFinder(*this);
+        }
+        
+        /**
+         * Add the specified pid and -pid to the list of ghost particles to
+         * include.
+         */
+        pidFinder &ghostIdPair(PdgId pid) {
+            _pids.insert(pid);
+            _pids.insert(-pid);
+            return *this;
+        }
+        
+    protected:
+        
+        /**
+         * Method that creates the actual projection for an event.
+         */
+        void project(const Event& e) {
+            //std::cout << "Event Accepted!" << std::endl;
+            // Loop over the GenParticles and add the ghosts
+            std::vector<HepMC::GenParticle *> allParticles = Rivet::particles(e.genEvent());
+            foreach(HepMC::GenParticle *g, allParticles) {
+                
+                if (_pids.find(g->pdg_id()) != _pids.end()) {
+                    Particle p(*g);
+                    //std::cout << "ID: " << p.pid() << " mass: " << p.mass() << " pt: " << p.pt() << " eta: " << p.eta() << " phi: " << p.phi() << std::endl;
+                    _theParticles.push_back(p);
+                }
+            }
+            //std::cout << "Current Total Number of Tops found: " << _theParticles.size() << std::endl;
+        }
+        
+    private:
+        set<PdgId> _pids;
+    };
 
 } // namespace Rivet
 

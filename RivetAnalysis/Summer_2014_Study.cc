@@ -30,7 +30,7 @@ namespace Rivet {
 //				std::cout<<"Handler name = "<< handler().runName() << std::endl;	
 				//setNeedsCrossSection();
 			}
-
+        //int nEventsAccepted = 0;
 
 		public:
 
@@ -58,6 +58,10 @@ namespace Rivet {
 				/// @todo Book histograms here, e.g.:
 				// _h_XXXX = bookProfile1D(1, 1, 1);
 				// _h_YYYY = bookHisto1D(2, 1, 1);
+                
+                pidFinder tqf(-5.0, 5.0);
+                tqf.ghostIdPair(PID::TQUARK);
+                addProjection(tqf, "tqf");
 
 			}
 
@@ -247,7 +251,10 @@ namespace Rivet {
 							}
 						}
 					}
-			
+                    //Now that the event has passed the dijet selection, extract all top quarks from event and add properties of last pair to tree
+                    const FinalState& tqf = applyProjection<FinalState>(event, "tqf");
+                    fillPidVar(tqf, PID::TQUARK);
+                    
 					fillKinematics("dijet", "Dijet", dijet1, btaggedWeight);
 					fillKinematics("dijet", "Dijet", dijet2, btaggedWeight);
 					for (unsigned int i=0; i<4; ++i) {
@@ -259,7 +266,8 @@ namespace Rivet {
 					bookAndFill1D("CutFlow", "Yields vs Selection Step", 2, "Selection Step", 5, -0.5, 4.5, weight);
 					//Use btaggedWeight to replicate effect of b-tagging.
 					bookAndFill1D("CutFlow", "Yields vs Selection Step", 3, "Selection Step", 5, -0.5, 4.5, btaggedWeight);
-						
+                    
+                    //nEventsAccepted++;
 				}
 
 			}
@@ -313,6 +321,8 @@ namespace Rivet {
 
 				// scale(_h_YYYY, crossSection()/sumOfWeights()); // norm to cross section
 				// normalize(_h_YYYY); // normalize to unity
+                
+                //std::cout << "Number of events Accepted: " << nEventsAccepted << std::endl;
 
 			}
 			void bookTree()
@@ -378,6 +388,19 @@ namespace Rivet {
 				_tree->Branch("Phi1", &_Phi1, "Phi1/D");
 				_tree->Branch("cosTheta1", &_cosTheta1, "cosTheta1/D");
 				_tree->Branch("cosTheta2", &_cosTheta2, "cosTheta2/D");
+                //For the TQUARKS: A is t, B is tbar
+                _tree->Branch("ptA", &_ptA, "ptA/D");
+                _tree->Branch("mA", &_mA, "mA/D");
+                _tree->Branch("etaA", &_etaA, "etaA/D");
+                _tree->Branch("yA", &_yA, "yA/D");
+                _tree->Branch("phiA", &_phiA, "phiA/D");
+                
+                _tree->Branch("ptB", &_ptB, "ptB/D");
+                _tree->Branch("mB", &_mB, "mB/D");
+                _tree->Branch("etaB", &_etaB, "etaB/D");
+                _tree->Branch("yB", &_yB, "yB/D");
+                _tree->Branch("phiB", &_phiB, "phiB/D");
+
 
 			}
 			void fillMelaAngles(const Event& event, std::string label, std::string title, const FourMomentum &H1, const TagJet &b11, 
@@ -463,7 +486,73 @@ namespace Rivet {
 					bookAndFill2D(label+"_ptmin_vs_dr",        title+" $p_{T,min}$ vs. $\\Delta R(b,b)$",   softest2.pT()/GeV, "$p_{T,min}$", 50, 0., 250., deltaR(b21, b22), "$\\Delta R(b,b)$",   50, 0., 5., weight);
 				}*/
 			}
+            //Based on fillMelaAngles, Fill properties of particle pair given a pid
+            void fillPidVar(const FinalState& fs, PdgId pid)
+            {
+                //A (incomplete) subscript mess that works, keep at the moment in case iterator version goes crazy
+                /*
+                double i = fs.particles().size()-1;
+                bool isTQUARK = false;
+                double index = fs.particles()[i].pid();
+                if ( index == PID::TQUARK ) {
+                    std::cout << "I FOUND A TQUARK FIRST" << std::endl;
+                    isTQUARK = true;
+                }
+                else if ( index == -PID::TQUARK ) {
+                    std::cout << "I FOUND A ANTITQUARK FIRST" << std::endl;
+                    isTQUARK = true;
+                }
+                else {
+                    std::cout << "ITS NOT A TQUARK" << std::endl;
+                }
+                if (isTQUARK == true) {
+                    std::cout << "Particle number: " << i+1 << std::endl;
+                    std::cout << "ID: " << fs.particles()[i].pid() << " mass: " << fs.particles()[i].mass() << " pt: " << fs.particles()[i].pt() << " eta: " << fs.particles()[i].eta() << " phi: " << fs.particles()[i].phi() << std::endl;
+                    //std::cout << "testing first" << std::endl;
+                }
+                 */
+                
+                //Let's use an iterator to start at the end! ...I wanted to use a reverse iterator but i just couldn't get it to work so here's an interim solution
+                //Consider throwing exceptions if there are no particles in projection or particle pair not found? (Since a single instance of either of these can invalidate the data)
+                bool filledPar = false;
+                bool filledAntiPar = false;
+                if (fs.particles().size() == 0) {
+                    std::cout << "There are no particles in this projection!" << std::endl;
+                    throw 10;
+                }
+                for (Particles::const_iterator it = fs.particles().end()-1; it!=fs.particles().begin(); --it) {
+                    Particle p(*it);
+                    if ( p.pid() == pid && filledPar == false ) {
+                        //std::cout << "I FOUND A" << std::endl;
+                        _ptA = p.pt();
+                        _mA = p.mass();
+                        _etaA = p.eta();
+                        _yA = p.rap();
+                        _phiA = p.phi();
+                        filledPar = true;
+                    }
+                    else if ( p.pid() == -pid && filledAntiPar == false) {
+                        //std::cout << "I FOUND B(ANTI)" << std::endl;
+                        _ptB = p.pt();
+                        _mB = p.mass();
+                        _etaB = p.eta();
+                        _yB = p.rap();
+                        _phiB = p.phi();
+                        filledAntiPar = true;
+                    }
+                    if (filledPar && filledAntiPar) {
+                        //std::cout << "Particle pair found!" << std::endl;
+                        break;
+                    }
 
+                }
+                if (filledPar == false || filledAntiPar == false) {
+                    std::cout << "Particle pair not found..." << std::endl;
+                    throw 20;
+                }
+            }
+        
+        
 			/// Fill histograms for the 5 unique angles in H->bb [Phys. Rev. D 86 095031 (2012)]
 			void fillXttVariables(const Jets& jets, std::string label, std::string title, const FourMomentum &H1, const TagJet &b11, 
 					const TagJet &b12, const FourMomentum &H2, const TagJet &b21, const TagJet &b22, double weight) 
@@ -783,6 +872,9 @@ namespace Rivet {
 			double _pt4, _eta4, _m4, _phi4;
 			double _genWeight, _btagWeight, _weight, _mX, _m12, _m34, _cosThetaStar, _Phi, _Phi1, _cosTheta1, _cosTheta2;
 			double _mW12, _mW34, _mt12, _mt34, _dRW12, _dRW34;
+        
+            double _ptA, _etaA, _mA, _yA, _phiA;
+            double _ptB, _etaB, _mB, _yB, _phiB;
 			/// @name Histograms
 			//@{
 			map<string, shared_ptr<YODA::Histo1D> > _histograms_1d;
