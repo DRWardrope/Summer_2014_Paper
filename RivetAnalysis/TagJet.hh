@@ -15,7 +15,7 @@ class TagJet : public Rivet::Jet
 		void setTagEff(double tagEff) { _tagEff = tagEff; }
 		void setFlavour(int flav) { _flav = flav; }
 	private:
-		int _flav;
 		double _tagEff;
+		int _flav;
 };
 #endif

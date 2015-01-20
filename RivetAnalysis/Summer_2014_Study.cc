@@ -694,8 +694,8 @@ namespace Rivet {
 				if (!hist_pass) return;
 
 				for (int i=0; i<hist_pass->bins().size(); ++i) {
-					double entries_pass = hist_pass->bin(i).sumW();
-					double entries_total = entries_pass + (hist_fail ? hist_fail->bin(i).sumW() : 0.);
+					//double entries_pass = hist_pass->bin(i).sumW();
+					//double entries_total = entries_pass + (hist_fail ? hist_fail->bin(i).sumW() : 0.);
 
 					/*if (entries_total > 0 && entries_pass >= 0) {
 					  bookAndFill1D(label+"efficiency", hist_pass->title(), (hist_pass->bin(i).lowEdge()+hist_pass->bin(i).highEdge())/2., 
