@@ -281,7 +281,8 @@ namespace Rivet {
 				std::map<std::string, boost::shared_ptr<YODA::Histo1D> >::const_iterator hIt = _histograms_1d.find("CutFlow");
 				if(hIt == _histograms_1d.end()) std::cout <<"finalize: Could not obtain CutFlow YODA::Histo1D!"<< std::endl;
 				else{
-					const YODA::HistoBin1D& bin0 = hIt->second->binAt(0);
+                    const YODA::Histo1D Hist0 = *hIt->second;
+					const YODA::HistoBin1D& bin0 = Hist0.binAt(0);
 					sumW_input = bin0.area();
 					nEvent_input = bin0.numEntries();
 				}
@@ -831,17 +832,17 @@ namespace Rivet {
 				assert(fuzzyEquals(q2, q21+q22, 1e-4));
 
 				Vector3 nZ(0., 0., 1.);
-				Vector3 n1  = q11.p().cross(q12.p()).unit();
-				Vector3 n2  = q21.p().cross(q22.p()).unit();
-				Vector3 nSC = nZ.cross(q1.p()).unit();
+				Vector3 n1  = q11.p3().cross(q12.p3()).unit();
+				Vector3 n2  = q21.p3().cross(q22.p3()).unit();
+				Vector3 nSC = nZ.cross(q1.p3()).unit();
 
 				//PRINT(n1);
 				//PRINT(n2);
 				//PRINT(nSC);
 
-				cos_theta_star = cos(q1.p().theta()-nZ.theta());
-				phi  = sign(q1.p().dot(n1.cross(n2))) * acos(-n1.dot(n2)); 
-				phi1 = sign(q1.p().dot(n1.cross(nSC))) * acos(n1.dot(nSC));
+				cos_theta_star = cos(q1.p3().theta()-nZ.theta());
+				phi  = sign(q1.p3().dot(n1.cross(n2))) * acos(-n1.dot(n2)); 
+				phi1 = sign(q1.p3().dot(n1.cross(nSC))) * acos(n1.dot(nSC));
 
 				LorentzTransform to_H1_CoM(-q1_lab.boostVector());
 				LorentzTransform to_H2_CoM(-q2_lab.boostVector());
@@ -849,8 +850,8 @@ namespace Rivet {
 				FourMomentum q11_H1 = to_H1_CoM.transform(q11_lab);
 				FourMomentum q21_H2 = to_H2_CoM.transform(q21_lab);
 
-				cos_theta1 = q1.p().dot(q11_H1.p()) / sqrt(q1.p().mod2()*q11_H1.p().mod2());
-				cos_theta2 = q2.p().dot(q21_H2.p()) / sqrt(q2.p().mod2()*q21_H2.p().mod2());
+				cos_theta1 = q1.p3().dot(q11_H1.p3()) / sqrt(q1.p3().mod2()*q11_H1.p3().mod2());
+				cos_theta2 = q2.p3().dot(q21_H2.p3()) / sqrt(q2.p3().mod2()*q21_H2.p3().mod2());
 			}
 			//@}
 

@@ -42,6 +42,9 @@ int main( int argc, char** argv )
     double pt34, m34, mW34, mt34, dRW34;
     double cosThetaStar, cosTheta1, cosTheta2, phi, phi1;
     
+    double ptA, mA, etaA, yA, PhiA;
+    double ptB, mB, etaB, yB, PhiB;
+    
     //Annoyingly, TMVA::Reader can only use floats, not doubles! So, duplicate everything.
     float f_cosThetaStar, abs_cosTheta1, abs_cosTheta2, modPhi1, f_phi;
     float f_ptX, f_yX, f_mX, f_cosTheta1, f_cosTheta2;
@@ -121,6 +124,18 @@ int main( int argc, char** argv )
         tree->SetBranchAddress("Phi", &phi);
         tree->SetBranchAddress("Phi1", &phi1);
         
+        tree->SetBranchAddress("ptA", &ptA);
+        tree->SetBranchAddress("mA", &mA);
+        tree->SetBranchAddress("etaA", &etaA);
+        tree->SetBranchAddress("yA", &yA);
+        tree->SetBranchAddress("phiA", &PhiA);
+        
+        tree->SetBranchAddress("ptB", &ptB);
+        tree->SetBranchAddress("mB", &mB);
+        tree->SetBranchAddress("etaB", &etaB);
+        tree->SetBranchAddress("yB", &yB);
+        tree->SetBranchAddress("phiB", &PhiB);
+        
         for(int i = 0; i < nEvents; ++i)
         {
             if(i%(nEvents/10) == 0) std::cout<<"Analysing event "<< i <<"/"<< nEvents << std::endl;
@@ -162,6 +177,18 @@ int main( int argc, char** argv )
             plotter.fill("before_pt12", pt12, weight);
             plotter.fill("before_pt34", pt34, weight);
             
+            plotter.fill("before_ptA", ptA, weight);
+            plotter.fill("before_mA", mA, weight);
+            plotter.fill("before_etaA", etaA, weight);
+            plotter.fill("before_yA", yA, weight);
+            plotter.fill("before_PhiA", PhiA, weight);
+            
+            plotter.fill("before_ptB", ptB, weight);
+            plotter.fill("before_mB", mB, weight);
+            plotter.fill("before_etaB", etaB, weight);
+            plotter.fill("before_yB", yB, weight);
+            plotter.fill("before_PhiB", PhiB, weight);
+            
             //Apply top veto.
             float topMVA = topVeto->EvaluateMVA("BDT");
             plotter.fill("TopVetoBDT", topMVA, weight);
@@ -181,6 +208,18 @@ int main( int argc, char** argv )
             plotter.fill("ptX", ptX, weight);
             plotter.fill("pt12", pt12, weight);
             plotter.fill("pt34", pt34, weight);
+            
+            plotter.fill("ptA", ptA, weight);
+            plotter.fill("mA", mA, weight);
+            plotter.fill("etaA", etaA, weight);
+            plotter.fill("yA", yA, weight);
+            plotter.fill("PhiA", PhiA, weight);
+            
+            plotter.fill("ptB", ptB, weight);
+            plotter.fill("mB", mB, weight);
+            plotter.fill("etaB", etaB, weight);
+            plotter.fill("yB", yB, weight);
+            plotter.fill("PhiB", PhiB, weight);
 
         }
     }
@@ -219,6 +258,18 @@ int main( int argc, char** argv )
     plotter.plotAlone("before_pt34", categories);
     plotter.plotAlone("before_yX", categories);
 
+    plotter.plotAlone("before_ptA", categories);
+    plotter.plotAlone("before_mA", categories);
+    plotter.plotAlone("before_etaA", categories);
+    plotter.plotAlone("before_yA", categories);
+    plotter.plotAlone("before_PhiA", categories);
+    
+    plotter.plotAlone("before_ptB", categories);
+    plotter.plotAlone("before_mB", categories);
+    plotter.plotAlone("before_etaB", categories);
+    plotter.plotAlone("before_yB", categories);
+    plotter.plotAlone("before_PhiB", categories);
+    
     //Abusing the modified signal background plot functions
     plotter.plotBeforeAfter("before_mX", "mX", categories);
     plotter.plotBeforeAfter("before_m12", "m12", categories);
@@ -233,6 +284,18 @@ int main( int argc, char** argv )
     plotter.plotBeforeAfter("before_pt34", "pt34", categories);
     plotter.plotBeforeAfter("before_yX", "yX", categories);
     
+    plotter.plotBeforeAfter("before_ptA", "ptA", categories);
+    plotter.plotBeforeAfter("before_mA", "mA", categories);
+    plotter.plotBeforeAfter("before_etaA", "etaA", categories);
+    plotter.plotBeforeAfter("before_yA", "yA", categories);
+    plotter.plotBeforeAfter("before_PhiA", "PhiA", categories);
+    
+    plotter.plotBeforeAfter("before_ptB", "ptB", categories);
+    plotter.plotBeforeAfter("before_mB", "mB", categories);
+    plotter.plotBeforeAfter("before_etaB", "etaB", categories);
+    plotter.plotBeforeAfter("before_yB", "yB", categories);
+    plotter.plotBeforeAfter("before_PhiB", "PhiB", categories);
+    
     std::cout<<"--------------------Cut flow for all backgrounds:-----------------------------------------------------------"<<std::endl;
     printCutFlow(plotter, categories, "All backgrounds");
     std::cout<<"------------------------------------------------------------------------------------------------------------"<<std::endl;
@@ -241,7 +304,7 @@ int main( int argc, char** argv )
 }
 void setupFileList(std::vector<TFile*>& files)
 {
-    files.push_back(TFile::Open("HH.root", "READ"));
+    //files.push_back(TFile::Open("HH.root", "READ"));
     files.push_back(TFile::Open("ttbar.root", "READ"));
     
     std::cout<<"setupFileList: Listed "<< files.size() <<" for processing."<< std::endl;
@@ -309,6 +372,30 @@ void bookPlots(LittlePlotter& plotter)
     plotter.book(new TH1F("ptX", ";X p_{T} [GeV];Number of Events", 50, 0., 250.));
     plotter.book(new TH1F("pt12", ";X p_{T} [GeV];Number of Events", 50, 100., 700.));
     plotter.book(new TH1F("pt34", ";X p_{T} [GeV];Number of Events", 50, 100., 700.));
+    
+    plotter.book(new TH1F("before_mA", ";m_{A} [GeV];Number of Events", 50, 150., 200.));
+    plotter.book(new TH1F("before_ptA", ";X p_{A} [GeV];Number of Events", 50, 0., 500.));
+    plotter.book(new TH1F("before_etaA", ";eta_{A};Number of Events", 50,-5., 5.));
+    plotter.book(new TH1F("before_yA", ";y_{A};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("before_PhiA", ";#Phi_{A};Number of Events", 50, 0., 2*M_PI));
+    
+    plotter.book(new TH1F("before_mB", ";m_{B} [GeV];Number of Events", 50, 150., 200.));
+    plotter.book(new TH1F("before_ptB", ";X p_{B} [GeV];Number of Events", 50, 0., 500.));
+    plotter.book(new TH1F("before_etaB", ";eta_{B};Number of Events", 50,-5., 5.));
+    plotter.book(new TH1F("before_yB", ";y_{B};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("before_PhiB", ";#Phi_{B};Number of Events", 50, 0., 2*M_PI));
+    
+    plotter.book(new TH1F("mA", ";m_{A} [GeV];Number of Events", 50, 150., 200.));
+    plotter.book(new TH1F("ptA", ";X p_{A} [GeV];Number of Events", 50, 0., 500.));
+    plotter.book(new TH1F("etaA", ";eta_{A};Number of Events", 50,-5., 5.));
+    plotter.book(new TH1F("yA", ";y_{A};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("PhiA", ";#Phi_{A};Number of Events", 50, 0., 2*M_PI));
+    
+    plotter.book(new TH1F("mB", ";m_{B} [GeV];Number of Events", 50, 150., 200.));
+    plotter.book(new TH1F("ptB", ";X p_{B} [GeV];Number of Events", 50, 0., 500.));
+    plotter.book(new TH1F("etaB", ";eta_{B};Number of Events", 50,-5., 5.));
+    plotter.book(new TH1F("yB", ";y_{B};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("PhiB", ";#Phi_{B};Number of Events", 50, 0., 2*M_PI));
     
     plotter.book(new TH1F("TopVetoBDT", ";Top Veto BDT Output;Number of Events", 50, -1., 1.));
 
