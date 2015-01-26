@@ -195,65 +195,133 @@ namespace Rivet {
 					FourMomentum dijet1 = bjets[0].momentum()+bjets[1].momentum();
 					FourMomentum dijet2 = bjets[2].momentum()+bjets[3].momentum();
 					const float btaggedWeight = weight*bjets[0].tagEff()*bjets[1].tagEff()*bjets[2].tagEff()*bjets[3].tagEff();
-
+                    std::cout << "Event Accepted" << std::endl;
+                    std::cout << "Number of jets found = " << bjets.size() << std::endl;
+                    std::cout << "Top 4 jets:" << std::endl;
+                    for (int j = 0; j < 4; ++j) {
+                        std::cout << j <<": pt = "<< bjets[j].pt() <<" GeV, eta = "<< bjets[j].eta() <<", phi = "<< bjets[j].phi() << std::endl;
+                        //std::cout << " Momentum: " << bjets[j].p3() << std::endl;
+                    }
+                    
 					//Xtt investigation
-					if(fabs(dijet1.mass() - 115.) < 25. && fabs(dijet2.mass() - 110.) < 25.)
-					{
+                    ParticleVector tDaughters;
+                    ParticleVector wDaughters;
+					//if(fabs(dijet1.mass() - 115.) < 25. && fabs(dijet2.mass() - 110.) < 25.)
+					//{
 						HepMC::GenEvent::particle_const_iterator it;
 						for (it=event.genEvent()->particles_begin(); it!=event.genEvent()->particles_end(); ++it) 
 						{
 							const HepMC::GenParticle *particle = *it;
-							if (abs(particle->pdg_id()) == 24) 
+							if (abs(particle->pdg_id()) == 24)
 							{
-								HepMC::GenVertex *decay = particle->end_vertex();
+							/*	HepMC::GenVertex *decay = particle->end_vertex();
 								if (decay && decay->particles_out_size() == 2) 
 								{
-							//		wBosons.push_back(*particle);
+								//	wBosons.push_back(*particle);
 									HepMC::GenVertex::particles_out_const_iterator itv;
 									ParticleVector wDaughters;
 									for (itv=decay->particles_out_const_begin(); itv!=decay->particles_out_const_end(); ++itv) {
-										//if (abs((*itv)->pdg_id()) == 5) {
+										if (abs((*itv)->pdg_id()) == 5) {
 											wDaughters.push_back(*findLastInChain(*itv));
-										//}
+										}
 									}
-									/*std::cout<<"Number of w daughters found = "<< wDaughters.size() << std::endl;
+									std::cout<<"Number of w daughters found = "<< wDaughters.size() << std::endl;
 									for(int w = 0; w < wDaughters.size(); ++w)
 									{
 										std::cout<< w <<": id = "<< wDaughters[w].pdgId() <<", pt = "<< wDaughters[w].pt() <<" GeV, eta = "<< wDaughters[w].eta()
 												<<", phi = "<< wDaughters[w].phi() << std::endl;
 									}
-									std::cout<<"DeltaR(wDaughters[0], wDaughters[1]) = "<< deltaR(wDaughters[0], wDaughters[1]) << std::endl;*/
-									bookAndFill1D("Wdaughters_dR", "\\Delta R(W daughter 1, W daughter 2)", deltaR(wDaughters[0], wDaughters[1]) ,   "\\Delta R",   50, 0.,   5.,   btaggedWeight);
-								}
+									//std::cout<<"DeltaR(wDaughters[0], wDaughters[1]) = "<< deltaR(wDaughters[0], wDaughters[1]) << std::endl;
+									//bookAndFill1D("Wdaughters_dR", "\\Delta R(W daughter 1, W daughter 2)", deltaR(wDaughters[0], wDaughters[1]) ,   "\\Delta R",   50, 0.,   5.,   btaggedWeight);
+								}*/
 							}else if(abs(particle->pdg_id()) == 6)
 							{
 								HepMC::GenVertex *decay = particle->end_vertex();
 								if (decay && decay->particles_out_size() == 2) 
 								{
 							//		wBosons.push_back(*particle);
+                                    //std::cout << "This top decays!" << std::endl;
+                                    Particle p(*particle);
+                                    //std::cout << "ID: " << p.pid() << " mass: " << p.mass() << " GeV, pt: " << p.pt() << " GeV, eta: " << p.eta() << ", phi: " << p.phi() << std::endl;
+                                    //std::cout << "Momentum: " << p.p3() << std::endl;
 									HepMC::GenVertex::particles_out_const_iterator itv;
-									ParticleVector tDaughters;
+									//ParticleVector bQuarks;
+                                    //ParticleVector wBosons;
+                                    //std::cout << "Decay Products:" << std::endl;
 									for (itv=decay->particles_out_const_begin(); itv!=decay->particles_out_const_end(); ++itv) {
-										//if (abs((*itv)->pdg_id()) == 5) {
-											tDaughters.push_back(*findLastInChain(*itv));
-										//}
+										//const HepMC::GenParticle *daughter = *itv;
+                                        //Particle d(*daughter);
+                                        //std::cout << "ID: " << d.pid() << " mass: " << d.mass() << " GeV, pt: " << d.pt() << " GeV, eta: " << d.eta() << ", phi: " << d.phi() << std::endl;
+                                        //std::cout << "Momentum: " << d.p3() << std::endl;
+                                        if (abs((*itv)->pdg_id()) == 5) {
+											//bQuarks.push_back(*itv);
+                                            tDaughters.push_back(*itv);
+										}
+                                        if (abs((*itv)->pdg_id()) == 24) {
+                                            const HepMC::GenParticle *wBoson = findLastInChain(*itv);
+                                            //wBosons.push_back(*wBoson);
+                                            HepMC::GenVertex *decayV = wBoson->end_vertex();
+                                            if (decayV && decayV->particles_out_size() == 2)
+                                            {
+                                                //		wBosons.push_back(*particle);
+                                                //std::cout << "This W decays!" << std::endl;
+                                                HepMC::GenVertex::particles_out_const_iterator itv2;
+                                                for (itv2=decayV->particles_out_const_begin(); itv2!=decayV->particles_out_const_end(); ++itv2) {
+                                                    const HepMC::GenParticle *wDaughter = *itv2;
+                                                    //const HepMC::GenParticle *wDaughter_debug = findLastInChain(*itv2);
+                                                    //Particle wd(*wDaughter);
+                                                    wDaughters.push_back(*wDaughter);
+                                                    if (abs((*itv2)->pdg_id()) <= 6) { //if it is a hadron, otherwise do not bother matching
+                                                        tDaughters.push_back(*wDaughter);
+                                                    }
+                                                    //std::cout << "  ID: " << wd.pid() << " mass: " << wd.mass() << " GeV, pt: " << wd.pt() << " GeV, eta: " << wd.eta() << ", phi: " << wd.phi() << std::endl;
+                                                    //std::cout << "  Momentum: " << wd.p3() << std::endl;
+                                                }
+                                            }
+                                        }
 									}
-									/*std::cout<<"Number of w daughters found = "<< tDaughters.size() << std::endl;
-									for(int w = 0; w < tDaughters.size(); ++w)
+                                    
+                                    /*
+									std::cout<<"Number of b quarks found = "<< bQuarks.size() << std::endl;
+									for(int w = 0; w < bQuarks.size(); ++w)
 									{
-										std::cout<< w <<": id = "<< tDaughters[w].pdgId() <<", pt = "<< tDaughters[w].pt() <<" GeV, eta = "<< tDaughters[w].eta()
-												<<", phi = "<< tDaughters[w].phi() << std::endl;
+										std::cout<< w <<": id = "<< bQuarks[w].pdgId() <<", pt = "<< bQuarks[w].pt() <<" GeV, eta = "<< bQuarks[w].eta()
+												<<", phi = "<< bQuarks[w].phi() << std::endl;
 									}
-									std::cout<<"DeltaR(tDaughters[0], tDaughters[1]) = "<< deltaR(tDaughters[0], tDaughters[1]) << std::endl;*/
-									bookAndFill1D("tDaughters_dR", "\\Delta R(t daughter 1, t daughter 2)", deltaR(tDaughters[0], tDaughters[1]) ,   "\\Delta R",   50, 0.,   5.,   btaggedWeight);
+                                    
+                                    std::cout<<"Number of w Bosons found = "<< wBosons.size() << std::endl;
+                                    for(int w = 0; w < wBosons.size(); ++w)
+                                    {
+                                        std::cout<< w <<": id = "<< wBosons[w].pdgId() <<", pt = "<< wBosons[w].pt() <<" GeV, eta = "<< wBosons[w].eta()
+                                        <<", phi = "<< wBosons[w].phi() << std::endl;
+                                    }
+                                    
+                                    std::cout<<"Number of w daughters found = "<< wDaughters.size() << std::endl;
+                                    for(int w = 0; w < wDaughters.size(); ++w)
+                                    {
+                                        std::cout<< w <<": id = "<< wDaughters[w].pdgId() <<", pt = "<< wDaughters[w].pt() <<" GeV, eta = "<< wDaughters[w].eta()
+                                        <<", phi = "<< wDaughters[w].phi() << std::endl;
+                                    }
+                                    */
+									//std::cout<<"DeltaR(tDaughters[0], tDaughters[1]) = "<< deltaR(tDaughters[0], tDaughters[1]) << std::endl;
+									//bookAndFill1D("tDaughters_dR", "\\Delta R(t daughter 1, t daughter 2)", deltaR(tDaughters[0], tDaughters[1]) ,   "\\Delta R",   50, 0.,   5.,   btaggedWeight);
 								}
 
 							}
 						}
-					}
+					//}
                     //Now that the event has passed the dijet selection, extract all top quarks from event and add properties of last pair to tree
                     const FinalState& tqf = applyProjection<FinalState>(event, "tqf");
                     fillPidVar(tqf, PID::TQUARK);
+                    
+                    std::cout<<"Number of t daughter hadrons found = "<< tDaughters.size() << std::endl;
+                    for(int w = 0; w < tDaughters.size(); ++w)
+                    {
+                        std::cout<< w <<": id = "<< tDaughters[w].pdgId() <<", pt = "<< tDaughters[w].pt() <<" GeV, eta = "<< tDaughters[w].eta()
+                        <<", phi = "<< tDaughters[w].phi() << std::endl;
+                    }
+                    
+                    matchJetToPar(bjets, tDaughters, wDaughters);
                     
 					fillKinematics("dijet", "Dijet", dijet1, btaggedWeight);
 					fillKinematics("dijet", "Dijet", dijet2, btaggedWeight);
@@ -401,6 +469,52 @@ namespace Rivet {
                 _tree->Branch("etaB", &_etaB, "etaB/D");
                 _tree->Branch("yB", &_yB, "yB/D");
                 _tree->Branch("phiB", &_phiB, "phiB/D");
+                
+                _tree->Branch("quarkMiss12", &_quarkMiss12, "quarkMiss12/D");
+                _tree->Branch("ptMiss12", &_ptMiss12, "ptMiss12/D");
+                _tree->Branch("mMiss12", &_mMiss12, "mMiss12/D");
+                _tree->Branch("etaMiss12", &_etaMiss12, "etaMiss12/D");
+                _tree->Branch("yMiss12", &_yMiss12, "yMiss12/D");
+                _tree->Branch("phiMiss12", &_phiMiss12, "phiMiss12/D");
+                
+                _tree->Branch("quarkMiss34", &_quarkMiss34, "quarkMiss34/D");
+                _tree->Branch("ptMiss34", &_ptMiss34, "ptMiss34/D");
+                _tree->Branch("mMiss34", &_mMiss34, "mMiss34/D");
+                _tree->Branch("etaMiss34", &_etaMiss34, "etaMiss34/D");
+                _tree->Branch("yMiss34", &_yMiss34, "yMiss34/D");
+                _tree->Branch("phiMiss34", &_phiMiss34, "phiMiss34/D");
+                
+                _tree->Branch("charge12", &_charge12, "charge12/D");
+                _tree->Branch("charge34", &_charge34, "charge34/D");
+                
+                _tree->Branch("bLeadStatus12", &_bLeadStatus12, "bLeadStatus12/D");
+                _tree->Branch("bLeadStatus34", &_bLeadStatus34, "bLeadStatus34/D");
+                _tree->Branch("bothBleading", &_bothBleading, "bothBleading/D");
+                _tree->Branch("dijetsHaveTwoBquarks", &_dijetsHaveTwoBquarks, "dijetsHaveTwoBquarks/D");
+                
+                _tree->Branch("dR_sublead12", &_dR_sublead12, "dR_sublead12/D");
+                _tree->Branch("dR_sublead34", &_dR_sublead34, "dR_sublead34/D");
+                _tree->Branch("dR_lead12", &_dR_lead12, "dR_lead12/D");
+                _tree->Branch("dR_lead34", &_dR_lead34, "dR_lead34/D");
+                
+                _tree->Branch("dR_Wquarks12", &_dR_Wquarks12, "dR_Wquarks12/D");
+                _tree->Branch("dR_Wquarks34", &_dR_Wquarks34, "dR_Wquarks34/D");
+                
+                _tree->Branch("numJetsMatched", &_numJetsMatched, "numJetsMatched/D");
+                _tree->Branch("numHadrons", &_numHadrons, "numHadrons/D");
+                _tree->Branch("hadronMatchStatus", &_hadronMatchStatus, "hadronMatchStatus/D");
+                _tree->Branch("alignStatus", &_alignStatus, "alignStatus/D");
+                _tree->Branch("multiMatch", &_multiMatch, "multiMatch/D");
+                
+                _tree->Branch("quark1", &_quark1, "quark1/D");
+                _tree->Branch("quark2", &_quark2, "quark2/D");
+                _tree->Branch("quark3", &_quark3, "quark3/D");
+                _tree->Branch("quark4", &_quark4, "quark4/D");
+                
+                _tree->Branch("deltaR1", &_deltaR1, "deltaR1/D");
+                _tree->Branch("deltaR2", &_deltaR2, "deltaR2/D");
+                _tree->Branch("deltaR3", &_deltaR3, "deltaR3/D");
+                _tree->Branch("deltaR4", &_deltaR4, "deltaR4/D");
 
 
 			}
@@ -553,6 +667,341 @@ namespace Rivet {
                 }
             }
         
+            //Matches particles found from tracing decays to identified jets. Currently optimised for ttbar. Sorry about the magic numbers.
+            //Also does diagnostics for 6 hardon 4 jets matched events. Wanted to move it to a seperate function, but using shared variables for now.
+            void matchJetToPar(std::vector<TagJet> &bjets, ParticleVector &tDaughters, ParticleVector &wDaughters)
+            {
+                struct quark_with_dR {
+                    double quark;
+                    double index;
+                    double dR;
+                };
+
+                std::map<int, quark_with_dR> quark;
+                std::vector<int> barcodes;
+                int barCount = 0;
+                _multiMatch = 0;
+                double numJetsMatched = 0;
+                for (int i=0; i<4; ++i) {
+                    std::map<int, double> dR;
+                    quark_with_dR matchingQuark;
+                    int minkey = -1;
+                    for (int j=0; j<tDaughters.size(); ++j) {
+                        //std::cout << "dR for jet no. " << i << " and tDaughter no. " << j << " = " << deltaR(bjets[i], tDaughters[j]) << std::endl;
+                        double dR_temp = deltaR(bjets[i], tDaughters[j]);
+                        if (dR_temp < 0.3) {
+                            //std::cout << "dR for jet no. " << i << " and tDaughter no. " << j << " = " << deltaR(bjets[i], tDaughters[j]) << std::endl;
+                            dR[j] = (dR_temp);
+                            if (minkey == -1) {
+                                minkey = j;
+                            } else if (dR_temp < dR[minkey]){
+                                //std::cout << "Found a smaller dR!" << std::endl;
+                                minkey = j;
+                            }
+                        }
+                        
+                    }
+                    /*if (dR.size() == 0) {
+                        std::cout << "No match for jet no. " << i << std::endl;
+                    }
+                    if (dR.size() == 1) {
+                        //std::cout << "Perfect!" << std::endl;
+                    }
+                    if (dR.size() >= 1) {
+                        std::cout << "Matched!" << std::endl;
+                    }*/
+                    if (dR.size() > 1) {
+                        //std::cout << "oh noes multiple matches!" << std::endl;
+                        _multiMatch = 1;
+                    }
+                    if (minkey == -1) {
+                        matchingQuark.quark = 0;
+                        matchingQuark.dR = 0;
+                        continue;
+                    }
+                    matchingQuark.quark = tDaughters[minkey].pdgId();
+                    for (std::vector<int>::iterator it = barcodes.begin() ; it != barcodes.end(); ++it) { //If same particle used to match more than 1 jet, crash!
+                        //std::cout << barCount << " " << *it << std::endl;
+                        if (tDaughters[minkey].genParticle()->barcode() == *it) {
+                            std::cout << "This particle has been used!" << std::endl;
+                            throw 30;
+                        }
+                        barCount++;
+                    }
+                    barcodes.push_back(tDaughters[minkey].genParticle()->barcode());
+                    matchingQuark.dR = dR[minkey];
+                    matchingQuark.index = minkey;
+                    std::cout << "dR for jet no. " << i << " and tDaughter no. " << minkey << " = " << matchingQuark.dR << ", flavour = " << matchingQuark.quark <<std::endl;
+                    //std::cout << tDaughters[minkey].genParticle()->barcode() << std::endl;
+                    quark[i+1] = matchingQuark;
+                    numJetsMatched++;
+                }
+                //Determining Match status code based on number of hardrons found vs number of jets found: Ideally get 3 for majority of events, 1 for rare tau decay
+                //2 signifies imperfect matching despite fully hadronic decay: preliminary investigation suggests this is not due to taking first particle in iterator.
+                if (tDaughters.size() == 6 && numJetsMatched == 4) {
+                    _hadronMatchStatus = 3;
+                }
+                else if (tDaughters.size() == 6 && numJetsMatched < 4) {
+                    if (tDaughters.size() == 6 && numJetsMatched == 0) {
+                        _hadronMatchStatus = -1;
+                    }
+                    else {
+                        _hadronMatchStatus = 2;
+                    }
+                }
+                else if (tDaughters.size() == 4 && numJetsMatched == 4) {
+                    _hadronMatchStatus = -2;
+                }
+                else if (tDaughters.size() == 4 && numJetsMatched < 4) {
+                    if (tDaughters.size() == 4 && numJetsMatched == 0) {
+                        _hadronMatchStatus = -3;
+                    }
+                    else {
+                       _hadronMatchStatus = 1;
+                    }
+                }
+                else if (tDaughters.size() == 2 && numJetsMatched <= 2) {
+                    if (tDaughters.size() == 2 && numJetsMatched == 0) {
+                        _hadronMatchStatus = -4;
+                    }
+                    else {
+                        _hadronMatchStatus = 0;
+                    }
+                }
+                else {
+                    _hadronMatchStatus = -5;
+                }
+                //If fully hadronic and perfect match, perform diagnosis
+                if (tDaughters.size() == 6 && numJetsMatched == 4) {
+                    //Determine dijet charge from associated particles
+                    const double upcharge = 2./3;
+                    const double downcharge = -1./3;
+                    double charge12 = 0;
+                    for (int i = 1; i < 3; i++) {
+                        double is_negative = 1;
+                        if (quark[i].quark < 0) {
+                            is_negative = -1;
+                        }
+                        if (fabs(quark[i].quark) == 5) {
+                            charge12 = charge12 + ((is_negative)*(downcharge));
+                        }
+                        else if (fabs(quark[i].quark) == 4) {
+                            charge12 = charge12 + ((is_negative)*(upcharge));
+                        }
+                        else if (fabs(quark[i].quark) == 3) {
+                            charge12 = charge12 + ((is_negative)*(downcharge));
+                        }
+                        else if (fabs(quark[i].quark) == 2) {
+                            charge12 = charge12 + ((is_negative)*(upcharge));
+                        }
+                        else if (fabs(quark[i].quark) == 1) {
+                            charge12 = charge12 + ((is_negative)*(downcharge));
+                        }
+                    }
+                    double charge34 = 0;
+                    for (int i = 3; i < 5; i++) {
+                        double is_negative = 1;
+                        if (quark[i].quark < 0) {
+                            is_negative = -1;
+                        }
+                        if (fabs(quark[i].quark) == 5) {
+                            charge34 = charge34 + ((is_negative)*(downcharge));
+                        }
+                        else if (fabs(quark[i].quark) == 4) {
+                            charge34 = charge34 + ((is_negative)*(upcharge));
+                        }
+                        else if (fabs(quark[i].quark) == 3) {
+                            charge34 = charge34 + ((is_negative)*(downcharge));
+                        }
+                        else if (fabs(quark[i].quark) == 2) {
+                            charge34 = charge34 + ((is_negative)*(upcharge));
+                        }
+                        else if (fabs(quark[i].quark) == 1) {
+                            charge34 = charge34 + ((is_negative)*(downcharge));
+                        }
+                    }
+                    _charge12 = charge12;
+                    _charge34 = charge34;
+                    //Orientation tests: is the dijet composed of particles of only 1 top or both tops?
+                    bool from_top_12 = (quark[1].index < 3 && quark[2].index < 3);
+                    bool from_antitop_12 = (quark[1].index > 2 && quark[2].index > 2);
+                    bool from_top_34 = (quark[3].index < 3 && quark[4].index < 3);
+                    bool from_antitop_34 = (quark[3].index > 2 && quark[4].index > 2);
+                    if ((from_top_12 && from_antitop_34) || (from_top_34 && from_antitop_12)) { //If each dijet only has 1 contributing top, find missing particle
+                        _alignStatus = 2;
+                        double thirdIndex_A = -1;
+                        double thirdIndex_B = -1;
+                        if (from_top_12) {
+                            for (double i=0; i < 3; i++) {
+                                if (quark[1].index == i) continue;
+                                if (quark[2].index == i) continue;
+                                thirdIndex_A = i;
+                            }
+                            _dR_Wquarks12 = deltaR(wDaughters[0], wDaughters[1]);
+                        }
+                        else if (from_antitop_12) {
+                            for (double i=3; i < 6; i++) {
+                                if (quark[1].index == i) continue;
+                                if (quark[2].index == i) continue;
+                                thirdIndex_A = i;
+                            }
+                            _dR_Wquarks12 = deltaR(wDaughters[2], wDaughters[3]);
+                        }
+                        //std::cout << "thirdIndex_A = " << thirdIndex_A << std::endl;
+                        if (from_top_34) {
+                            for (double i=0; i < 3; i++) {
+                                if (quark[3].index == i) continue;
+                                if (quark[4].index == i) continue;
+                                thirdIndex_B = i;
+                            }
+                            _dR_Wquarks34 = deltaR(wDaughters[0], wDaughters[1]);
+                        }
+                        else if (from_antitop_34) {
+                            for (double i=3; i < 6; i++) {
+                                if (quark[3].index == i) continue;
+                                if (quark[4].index == i) continue;
+                                thirdIndex_B = i;
+                            }
+                            _dR_Wquarks34 = deltaR(wDaughters[2], wDaughters[3]);
+                        }
+                        //std::cout << "thirdIndex_B = " << thirdIndex_B << std::endl;
+                        if (thirdIndex_A == -1 || thirdIndex_B == -1) { //If either third particle not identifed for any reason, crash
+                            std::cout << "Third particle not found!" << std::endl;
+                            throw 40;
+                        }
+                        //Third particle and lead/subleading jet dR calculations
+                        if (bjets[0].pt() > bjets[1].pt()) {
+                            _dR_sublead12 = deltaR(bjets[1], tDaughters[thirdIndex_A]);
+                            _dR_lead12 = deltaR(bjets[0], tDaughters[thirdIndex_A]);
+                            if (fabs(quark[1].quark) == 5) {
+                                _bLeadStatus12 = 2;
+                            }
+                            else if (fabs(quark[2].quark) == 5) {
+                                _bLeadStatus12 = 1;
+                            }
+                            else {
+                                _bLeadStatus12 = 0;
+                            }
+                        }
+                        else {
+                            _dR_sublead12 = deltaR(bjets[0], tDaughters[thirdIndex_A]);
+                            _dR_lead12 = deltaR(bjets[1], tDaughters[thirdIndex_A]);
+                            if (fabs(quark[2].quark) == 5) {
+                                _bLeadStatus12 = 2;
+                            }
+                            else if (fabs(quark[1].quark) == 5) {
+                                _bLeadStatus12 = 1;
+                            }
+                            else {
+                                _bLeadStatus12 = 0;
+                            }
+                        }
+                        
+                        if (bjets[2].pt() > bjets[3].pt()) {
+                            _dR_sublead34 = deltaR(bjets[3], tDaughters[thirdIndex_B]);
+                            _dR_lead34 = deltaR(bjets[2], tDaughters[thirdIndex_B]);
+                            if (fabs(quark[3].quark) == 5) {
+                                _bLeadStatus34 = 2;
+                            }
+                            else if (fabs(quark[4].quark) == 5) {
+                                _bLeadStatus34 = 1;
+                            }
+                            else {
+                                _bLeadStatus34 = 0;
+                            }
+                        }
+                        else {
+                            _dR_sublead34 = deltaR(bjets[2], tDaughters[thirdIndex_B]);
+                            _dR_lead34 = deltaR(bjets[3], tDaughters[thirdIndex_B]);
+                            if (fabs(quark[4].quark) == 5) {
+                                _bLeadStatus34 = 2;
+                            }
+                            else if (fabs(quark[3].quark) == 5) {
+                                _bLeadStatus34 = 1;
+                            }
+                            else {
+                                _bLeadStatus34 = 0;
+                            }
+                        }
+                        /*
+                        std::cout << "bLeadStatus12: " << _bLeadStatus12 << std::endl;
+                        std::cout << "bLeadStatus34: " << _bLeadStatus34 << std::endl;
+                        std::cout << "dRWquarks12: " << _dR_Wquarks12 << std::endl;
+                        std::cout << "dRWquarks34: " << _dR_Wquarks34 << std::endl;
+                         */
+                        if (_bLeadStatus12 == 2 && _bLeadStatus34 == 2) {
+                            _bothBleading = 2;
+                        }
+                        else if (_bLeadStatus12 == 2 || _bLeadStatus34 == 2) {
+                            _bothBleading = 1;
+                        }
+                        else {
+                            _bothBleading = 0;
+                        }
+                        if (_bLeadStatus12 > 0 && _bLeadStatus34 > 0) {
+                            _dijetsHaveTwoBquarks = 2;
+                        }
+                        else if (_bLeadStatus12 > 0 || _bLeadStatus34 > 0) {
+                            _dijetsHaveTwoBquarks = 1;
+                        }
+                        else {
+                            _dijetsHaveTwoBquarks = 0;
+                        }
+                        //Third particle information storage:
+                        _quarkMiss12 = tDaughters[thirdIndex_A].pdgId();
+                        _ptMiss12 = tDaughters[thirdIndex_A].pt();
+                        _etaMiss12 = tDaughters[thirdIndex_A].eta();
+                        _phiMiss12 = tDaughters[thirdIndex_A].phi();
+                        _yMiss12 = tDaughters[thirdIndex_A].rap();
+                        _mMiss12 = tDaughters[thirdIndex_A].mass();
+                        
+                        _quarkMiss34 = tDaughters[thirdIndex_B].pdgId();
+                        _ptMiss34 = tDaughters[thirdIndex_B].pt();
+                        _etaMiss34 = tDaughters[thirdIndex_B].eta();
+                        _phiMiss34 = tDaughters[thirdIndex_B].phi();
+                        _yMiss34 = tDaughters[thirdIndex_B].rap();
+                        _mMiss34 = tDaughters[thirdIndex_B].mass();
+                    }
+                    else if (from_top_12 || from_antitop_34 || from_top_34 || from_antitop_12) { //If only 1 dijet is compeletely from 1 top
+                        _alignStatus = 1;
+                    }
+                    else {
+                        _alignStatus = 0;
+                    }
+                }
+                else { //Fill unused variables with irrelevant constants
+                    _charge12 = -5;
+                    _charge34 = -5;
+                    _alignStatus = -1;
+                    _dR_sublead12 = -10;
+                    _dR_sublead34 = -10;
+                    _dR_lead12 = -10;
+                    _dR_lead34 = -10;
+                    _bLeadStatus12 = -5;
+                    _bLeadStatus34 = -5;
+                    _bothBleading = -5;
+                    _dijetsHaveTwoBquarks = -5;
+                    _dR_Wquarks12 = -10;
+                    _dR_Wquarks34 = -10;
+                }
+                
+                _numHadrons = tDaughters.size();
+                _numJetsMatched = numJetsMatched;
+                
+                //quark1 = fabs(quark[1].quark);
+                _quark1 = quark[1].quark;
+                _deltaR1 = quark[1].dR;
+                //_quark2 = fabs(quark[2].quark);
+                _quark2 = quark[2].quark;
+                _deltaR2 = quark[2].dR;
+                //_quark3 = fabs(quark[3].quark);
+                _quark3 = quark[3].quark;
+                _deltaR3 = quark[3].dR;
+                //_quark4 = fabs(quark[4].quark);
+                _quark4 = quark[4].quark;
+                _deltaR4 = quark[4].dR;
+            }
+        
         
 			/// Fill histograms for the 5 unique angles in H->bb [Phys. Rev. D 86 095031 (2012)]
 			void fillXttVariables(const Jets& jets, std::string label, std::string title, const FourMomentum &H1, const TagJet &b11, 
@@ -662,8 +1111,35 @@ namespace Rivet {
 				}
 				return particle;
 			}
-
-			void fillReconstructionEfficiency(std::string label, std::string title, const Particle &parent, 
+            /*
+            const HepMC::GenParticle *findLastInChain(const HepMC::GenParticle *particle) {
+                HepMC::GenVertex *decay = particle->end_vertex();
+                std::cout << "findLastInChain Running" << std::endl;
+                bool continueChain = false;
+                const HepMC::GenParticle *nextInChain;
+                if (decay) {
+                    std::cout << "Number of decay products: " << decay->particles_out_size() << std::endl;
+                    HepMC::GenVertex::particles_out_const_iterator it;
+                    for (it=decay->particles_out_const_begin(); it!=decay->particles_out_const_end(); ++it) {
+                        Particle p(*it);
+                        std::cout << "  ID: " << p.pid() << " mass: " << p.mass() << " GeV, pt: " << p.pt() << " GeV, eta: " << p.eta() << ", phi: " << p.phi() << std::endl;
+                        //std::cout << "  Momentum: " << p.p3() << std::endl;
+                        if ((*it)->pdg_id() == particle->pdg_id() && (*it)->barcode() > particle->barcode()) {
+                            continueChain = true;
+                            nextInChain = *it;
+                        }
+                    }
+                }
+                if (continueChain) {
+                    return findLastInChain(nextInChain);
+                }
+                else {
+                    std::cout << "Thats the end of chain!" << std::endl;
+                    return particle;
+                }
+            }
+            */
+			void fillReconstructionEfficiency(std::string label, std::string title, const Particle &parent,
 					const Particle &p1, const Particle &p2, const Jets &jets, double weight) {
 
 				const Jet *j1 = 0, *j2 = 0;
@@ -876,6 +1352,18 @@ namespace Rivet {
         
             double _ptA, _etaA, _mA, _yA, _phiA;
             double _ptB, _etaB, _mB, _yB, _phiB;
+        
+            double _quarkMiss12, _ptMiss12, _etaMiss12, _phiMiss12, _yMiss12, _mMiss12;
+            double _quarkMiss34, _ptMiss34, _etaMiss34, _phiMiss34, _yMiss34, _mMiss34;
+            double _numJetsMatched, _numHadrons, _hadronMatchStatus, _alignStatus, _multiMatch;
+            double _charge12, _charge34;
+            double  _bLeadStatus12, _bLeadStatus34;
+            double _dijetsHaveTwoBquarks, _bothBleading;
+            double _dR_sublead12, _dR_sublead34;
+            double _dR_lead12, _dR_lead34;
+            double _dR_Wquarks12, _dR_Wquarks34;
+            double _quark1, _quark2, _quark3, _quark4;
+            double _deltaR1, _deltaR2, _deltaR3, _deltaR4;
 			/// @name Histograms
 			//@{
 			map<string, shared_ptr<YODA::Histo1D> > _histograms_1d;
