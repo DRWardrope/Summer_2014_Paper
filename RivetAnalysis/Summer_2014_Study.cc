@@ -195,13 +195,13 @@ namespace Rivet {
 					FourMomentum dijet1 = bjets[0].momentum()+bjets[1].momentum();
 					FourMomentum dijet2 = bjets[2].momentum()+bjets[3].momentum();
 					const float btaggedWeight = weight*bjets[0].tagEff()*bjets[1].tagEff()*bjets[2].tagEff()*bjets[3].tagEff();
-                    std::cout << "Event Accepted" << std::endl;
+                    /*std::cout << "Event Accepted" << std::endl;
                     std::cout << "Number of jets found = " << bjets.size() << std::endl;
                     std::cout << "Top 4 jets:" << std::endl;
                     for (int j = 0; j < 4; ++j) {
                         std::cout << j <<": pt = "<< bjets[j].pt() <<" GeV, eta = "<< bjets[j].eta() <<", phi = "<< bjets[j].phi() << std::endl;
                         //std::cout << " Momentum: " << bjets[j].p3() << std::endl;
-                    }
+                    }*/
                     
 					//Xtt investigation
                     ParticleVector tDaughters;
@@ -313,14 +313,14 @@ namespace Rivet {
                     //Now that the event has passed the dijet selection, extract all top quarks from event and add properties of last pair to tree
                     const FinalState& tqf = applyProjection<FinalState>(event, "tqf");
                     fillPidVar(tqf, PID::TQUARK);
-                    
+                    /*
                     std::cout<<"Number of t daughter hadrons found = "<< tDaughters.size() << std::endl;
                     for(int w = 0; w < tDaughters.size(); ++w)
                     {
                         std::cout<< w <<": id = "<< tDaughters[w].pdgId() <<", pt = "<< tDaughters[w].pt() <<" GeV, eta = "<< tDaughters[w].eta()
                         <<", phi = "<< tDaughters[w].phi() << std::endl;
                     }
-                    
+                    */
                     matchJetToPar(bjets, tDaughters, wDaughters);
                     
 					fillKinematics("dijet", "Dijet", dijet1, btaggedWeight);
@@ -671,17 +671,17 @@ namespace Rivet {
             //Also does diagnostics for 6 hardon 4 jets matched events. Wanted to move it to a seperate function, but using shared variables for now.
             void matchJetToPar(std::vector<TagJet> &bjets, ParticleVector &tDaughters, ParticleVector &wDaughters)
             {
-                struct quark_with_dR {
-                    double quark;
-                    double index;
-                    double dR;
-                };
-
+                
                 std::map<int, quark_with_dR> quark;
+                quark_with_dR nullQuark;
+                nullQuark.quark = -10;
+                nullQuark.index = -1;
+                nullQuark.dR = -10;
                 std::vector<int> barcodes;
                 int barCount = 0;
                 _multiMatch = 0;
                 double numJetsMatched = 0;
+                try {
                 for (int i=0; i<4; ++i) {
                     std::map<int, double> dR;
                     quark_with_dR matchingQuark;
@@ -715,15 +715,15 @@ namespace Rivet {
                         _multiMatch = 1;
                     }
                     if (minkey == -1) {
-                        matchingQuark.quark = 0;
-                        matchingQuark.dR = 0;
+                        matchingQuark = nullQuark;
+                        quark[i+1] = matchingQuark;
                         continue;
                     }
                     matchingQuark.quark = tDaughters[minkey].pdgId();
                     for (std::vector<int>::iterator it = barcodes.begin() ; it != barcodes.end(); ++it) { //If same particle used to match more than 1 jet, crash!
                         //std::cout << barCount << " " << *it << std::endl;
                         if (tDaughters[minkey].genParticle()->barcode() == *it) {
-                            std::cout << "This particle has been used!" << std::endl;
+                            //std::cout << "This particle has been used!" << std::endl;
                             throw 30;
                         }
                         barCount++;
@@ -731,14 +731,32 @@ namespace Rivet {
                     barcodes.push_back(tDaughters[minkey].genParticle()->barcode());
                     matchingQuark.dR = dR[minkey];
                     matchingQuark.index = minkey;
-                    std::cout << "dR for jet no. " << i << " and tDaughter no. " << minkey << " = " << matchingQuark.dR << ", flavour = " << matchingQuark.quark <<std::endl;
+                    //std::cout << "dR for jet no. " << i << " and tDaughter no. " << minkey << " = " << matchingQuark.dR << ", flavour = " << matchingQuark.quark <<std::endl;
                     //std::cout << tDaughters[minkey].genParticle()->barcode() << std::endl;
                     quark[i+1] = matchingQuark;
                     numJetsMatched++;
                 }
+                }
+                catch (int e) {
+                    if (e == 30) {
+                        //std::cout << "Invalidating event: set to -5 jets matched" << std::endl;
+                        numJetsMatched = -5;
+                        quark.clear();
+                        for (int i=0; i<4; ++i) {
+                            quark[i+1] = nullQuark;
+                        }
+                    }
+                    else {
+                        std::cout << "Something went wrong" << std::endl;
+                        throw e;
+                    }
+                }
                 //Determining Match status code based on number of hardrons found vs number of jets found: Ideally get 3 for majority of events, 1 for rare tau decay
                 //2 signifies imperfect matching despite fully hadronic decay: preliminary investigation suggests this is not due to taking first particle in iterator.
-                if (tDaughters.size() == 6 && numJetsMatched == 4) {
+                if (numJetsMatched == -5) {
+                    _hadronMatchStatus = -5;
+                }
+                else if (tDaughters.size() == 6 && numJetsMatched == 4) {
                     _hadronMatchStatus = 3;
                 }
                 else if (tDaughters.size() == 6 && numJetsMatched < 4) {
@@ -769,7 +787,7 @@ namespace Rivet {
                     }
                 }
                 else {
-                    _hadronMatchStatus = -5;
+                    _hadronMatchStatus = -6;
                 }
                 //If fully hadronic and perfect match, perform diagnosis
                 if (tDaughters.size() == 6 && numJetsMatched == 4) {
@@ -983,6 +1001,20 @@ namespace Rivet {
                     _dijetsHaveTwoBquarks = -5;
                     _dR_Wquarks12 = -10;
                     _dR_Wquarks34 = -10;
+                    
+                    _quarkMiss12 = -10;
+                    _ptMiss12 = -99;
+                    _etaMiss12 = -99;
+                    _phiMiss12 = -99;
+                    _yMiss12 = -99;
+                    _mMiss12 = -99;
+                    
+                    _quarkMiss34 = -10;
+                    _ptMiss34 = -99;
+                    _etaMiss34 = -99;
+                    _phiMiss34 = -99;
+                    _yMiss34 = -99;
+                    _mMiss34 = -99;
                 }
                 
                 _numHadrons = tDaughters.size();
@@ -1001,8 +1033,7 @@ namespace Rivet {
                 _quark4 = quark[4].quark;
                 _deltaR4 = quark[4].dR;
             }
-        
-        
+
 			/// Fill histograms for the 5 unique angles in H->bb [Phys. Rev. D 86 095031 (2012)]
 			void fillXttVariables(const Jets& jets, std::string label, std::string title, const FourMomentum &H1, const TagJet &b11, 
 					const TagJet &b12, const FourMomentum &H2, const TagJet &b21, const TagJet &b22, double weight) 
@@ -1302,23 +1333,25 @@ namespace Rivet {
 				//PRINT(q1);
 				//PRINT(q2);
 				//PRINT(q1+q2);
+                
+                //std::cout << (q1+q2).pT() << std::endl;
 
-				assert(fuzzyEquals((q1+q2).pT(), 0., 1e-4)); 
+				assert(fuzzyEquals((q1+q2).pT(), 0., 1e-4));
 				assert(fuzzyEquals(q1, q11+q12, 1e-4));
 				assert(fuzzyEquals(q2, q21+q22, 1e-4));
 
 				Vector3 nZ(0., 0., 1.);
-				Vector3 n1  = q11.p3().cross(q12.p3()).unit();
-				Vector3 n2  = q21.p3().cross(q22.p3()).unit();
-				Vector3 nSC = nZ.cross(q1.p3()).unit();
+				Vector3 n1  = q11.p().cross(q12.p()).unit();
+				Vector3 n2  = q21.p().cross(q22.p()).unit();
+				Vector3 nSC = nZ.cross(q1.p()).unit();
 
 				//PRINT(n1);
 				//PRINT(n2);
 				//PRINT(nSC);
 
-				cos_theta_star = cos(q1.p3().theta()-nZ.theta());
-				phi  = sign(q1.p3().dot(n1.cross(n2))) * acos(-n1.dot(n2)); 
-				phi1 = sign(q1.p3().dot(n1.cross(nSC))) * acos(n1.dot(nSC));
+				cos_theta_star = cos(q1.p().theta()-nZ.theta());
+				phi  = sign(q1.p().dot(n1.cross(n2))) * acos(-n1.dot(n2));
+				phi1 = sign(q1.p().dot(n1.cross(nSC))) * acos(n1.dot(nSC));
 
 				LorentzTransform to_H1_CoM(-q1_lab.boostVector());
 				LorentzTransform to_H2_CoM(-q2_lab.boostVector());
@@ -1326,8 +1359,8 @@ namespace Rivet {
 				FourMomentum q11_H1 = to_H1_CoM.transform(q11_lab);
 				FourMomentum q21_H2 = to_H2_CoM.transform(q21_lab);
 
-				cos_theta1 = q1.p3().dot(q11_H1.p3()) / sqrt(q1.p3().mod2()*q11_H1.p3().mod2());
-				cos_theta2 = q2.p3().dot(q21_H2.p3()) / sqrt(q2.p3().mod2()*q21_H2.p3().mod2());
+				cos_theta1 = q1.p().dot(q11_H1.p()) / sqrt(q1.p().mod2()*q11_H1.p().mod2());
+				cos_theta2 = q2.p().dot(q21_H2.p()) / sqrt(q2.p().mod2()*q21_H2.p().mod2());
 			}
 			//@}
 
@@ -1364,6 +1397,13 @@ namespace Rivet {
             double _dR_Wquarks12, _dR_Wquarks34;
             double _quark1, _quark2, _quark3, _quark4;
             double _deltaR1, _deltaR2, _deltaR3, _deltaR4;
+        
+            struct quark_with_dR {
+                double quark;
+                double index;
+                double dR;
+            };
+        
 			/// @name Histograms
 			//@{
 			map<string, shared_ptr<YODA::Histo1D> > _histograms_1d;
