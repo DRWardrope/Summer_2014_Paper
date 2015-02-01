@@ -888,7 +888,7 @@ namespace Rivet {
                             throw 40;
                         }
                         //Third particle and lead/subleading jet dR calculations
-                        if (bjets[0].pt() > bjets[1].pt()) {
+                        if (bjets[0].tagEff() >= bjets[1].tagEff()) {
                             _dR_sublead12 = deltaR(bjets[1], tDaughters[thirdIndex_A]);
                             _dR_lead12 = deltaR(bjets[0], tDaughters[thirdIndex_A]);
                             if (fabs(quark[1].quark) == 5) {
@@ -915,7 +915,7 @@ namespace Rivet {
                             }
                         }
                         
-                        if (bjets[2].pt() > bjets[3].pt()) {
+                        if (bjets[2].tagEff() >= bjets[3].tagEff()) {
                             _dR_sublead34 = deltaR(bjets[3], tDaughters[thirdIndex_B]);
                             _dR_lead34 = deltaR(bjets[2], tDaughters[thirdIndex_B]);
                             if (fabs(quark[3].quark) == 5) {

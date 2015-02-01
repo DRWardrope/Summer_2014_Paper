@@ -45,6 +45,18 @@ int main( int argc, char** argv )
     double ptA, mA, etaA, yA, PhiA;
     double ptB, mB, etaB, yB, PhiB;
     
+    double quarkMiss12, ptMiss12, etaMiss12, phiMiss12, yMiss12, mMiss12;
+    double quarkMiss34, ptMiss34, etaMiss34, phiMiss34, yMiss34, mMiss34;
+    double numJetsMatched, numHadrons, hadronMatchStatus, alignStatus, multiMatch;
+    double charge12, charge34;
+    double bLeadStatus12, bLeadStatus34;
+    double dijetsHaveTwoBquarks, bothBleading;
+    double dR_sublead12, dR_sublead34;
+    double dR_lead12, dR_lead34;
+    double dR_Wquarks12, dR_Wquarks34;
+    double quark1, quark2, quark3, quark4;
+    double deltaR1, deltaR2, deltaR3, deltaR4;
+    
     //Annoyingly, TMVA::Reader can only use floats, not doubles! So, duplicate everything.
     float f_cosThetaStar, abs_cosTheta1, abs_cosTheta2, modPhi1, f_phi;
     float f_ptX, f_yX, f_mX, f_cosTheta1, f_cosTheta2;
@@ -136,6 +148,53 @@ int main( int argc, char** argv )
         tree->SetBranchAddress("yB", &yB);
         tree->SetBranchAddress("phiB", &PhiB);
         
+        tree->SetBranchAddress("quarkMiss12", &quarkMiss12);
+        tree->SetBranchAddress("ptMiss12", &ptMiss12);
+        tree->SetBranchAddress("mMiss12", &mMiss12);
+        tree->SetBranchAddress("etaMiss12", &etaMiss12);
+        tree->SetBranchAddress("yMiss12", &yMiss12);
+        tree->SetBranchAddress("phiMiss12", &phiMiss12);
+        
+        tree->SetBranchAddress("quarkMiss34", &quarkMiss34);
+        tree->SetBranchAddress("ptMiss34", &ptMiss34);
+        tree->SetBranchAddress("mMiss34", &mMiss34);
+        tree->SetBranchAddress("etaMiss34", &etaMiss34);
+        tree->SetBranchAddress("yMiss34", &yMiss34);
+        tree->SetBranchAddress("phiMiss34", &phiMiss34);
+        
+        tree->SetBranchAddress("charge12", &charge12);
+        tree->SetBranchAddress("charge34", &charge34);
+        
+        tree->SetBranchAddress("bLeadStatus12", &bLeadStatus12);
+        tree->SetBranchAddress("bLeadStatus34", &bLeadStatus34);
+        tree->SetBranchAddress("bothBleading", &bothBleading);
+        tree->SetBranchAddress("dijetsHaveTwoBquarks", &dijetsHaveTwoBquarks);
+        
+        tree->SetBranchAddress("dR_sublead12", &dR_sublead12);
+        tree->SetBranchAddress("dR_sublead34", &dR_sublead34);
+        tree->SetBranchAddress("dR_lead12", &dR_lead12);
+        tree->SetBranchAddress("dR_lead34", &dR_lead34);
+        
+        tree->SetBranchAddress("dR_Wquarks12", &dR_Wquarks12);
+        tree->SetBranchAddress("dR_Wquarks34", &dR_Wquarks34);
+        
+        tree->SetBranchAddress("numJetsMatched", &numJetsMatched);
+        tree->SetBranchAddress("numHadrons", &numHadrons);
+        tree->SetBranchAddress("hadronMatchStatus", &hadronMatchStatus);
+        tree->SetBranchAddress("alignStatus", &alignStatus);
+        tree->SetBranchAddress("multiMatch", &multiMatch);
+        
+        tree->SetBranchAddress("quark1", &quark1);
+        tree->SetBranchAddress("quark2", &quark2);
+        tree->SetBranchAddress("quark3", &quark3);
+        tree->SetBranchAddress("quark4", &quark4);
+        
+        tree->SetBranchAddress("deltaR1", &deltaR1);
+        tree->SetBranchAddress("deltaR2", &deltaR2);
+        tree->SetBranchAddress("deltaR3", &deltaR3);
+        tree->SetBranchAddress("deltaR4", &deltaR4);
+
+        
         for(int i = 0; i < nEvents; ++i)
         {
             if(i%(nEvents/10) == 0) std::cout<<"Analysing event "<< i <<"/"<< nEvents << std::endl;
@@ -189,6 +248,53 @@ int main( int argc, char** argv )
             plotter.fill("before_yB", yB, weight);
             plotter.fill("before_PhiB", PhiB, weight);
             
+            plotter.fill("before_quarkMiss12", fabs(quarkMiss12), weight);
+            plotter.fill("before_ptMiss12", ptMiss12, weight);
+            //plotter.fill("before_mMiss12", mMiss12, weight);
+            plotter.fill("before_etaMiss12", etaMiss12, weight);
+            plotter.fill("before_yMiss12", yMiss12, weight);
+            plotter.fill("before_phiMiss12", phiMiss12, weight);
+            
+            plotter.fill("before_quarkMiss34", fabs(quarkMiss34), weight);
+            plotter.fill("before_ptMiss34", ptMiss34, weight);
+            //plotter.fill("before_mMiss34", mMiss34, weight);
+            plotter.fill("before_etaMiss34", etaMiss34, weight);
+            plotter.fill("before_yMiss34", yMiss34, weight);
+            plotter.fill("before_phiMiss34", phiMiss34, weight);
+            
+            plotter.fill("before_charge12", charge12, weight);
+            plotter.fill("before_charge34", charge34, weight);
+            
+            plotter.fill("before_bLeadStatus12", bLeadStatus12, weight);
+            plotter.fill("before_bLeadStatus34", bLeadStatus34, weight);
+            plotter.fill("before_bothBleading", bothBleading, weight);
+            plotter.fill("before_dijetsHaveTwoBquarks", dijetsHaveTwoBquarks, weight);
+            
+            plotter.fill("before_dR_sublead12", dR_sublead12, weight);
+            plotter.fill("before_dR_sublead34", dR_sublead34, weight);
+            plotter.fill("before_dR_lead12", dR_lead12, weight);
+            plotter.fill("before_dR_lead34", dR_lead34, weight);
+            
+            plotter.fill("before_dR_Wquarks12", dR_Wquarks12, weight);
+            plotter.fill("before_dR_Wquarks34", dR_Wquarks34, weight);
+            
+            plotter.fill("before_numJetsMatched", numJetsMatched, weight);
+            plotter.fill("before_numHadrons", numHadrons, weight);
+            plotter.fill("before_hadronMatchStatus", hadronMatchStatus, weight);
+            plotter.fill("before_alignStatus", alignStatus, weight);
+            plotter.fill("before_multiMatch", multiMatch, weight);
+            
+            plotter.fill("before_quark1", quark1, weight);
+            plotter.fill("before_quark2", quark2, weight);
+            plotter.fill("before_quark3", quark3, weight);
+            plotter.fill("before_quark4", quark4, weight);
+            
+            plotter.fill("before_deltaR1", deltaR1, weight);
+            plotter.fill("before_deltaR2", deltaR2, weight);
+            plotter.fill("before_deltaR3", deltaR3, weight);
+            plotter.fill("before_deltaR4", deltaR4, weight);
+            
+            
             //Apply top veto.
             float topMVA = topVeto->EvaluateMVA("BDT");
             plotter.fill("TopVetoBDT", topMVA, weight);
@@ -221,9 +327,54 @@ int main( int argc, char** argv )
             plotter.fill("yB", yB, weight);
             plotter.fill("PhiB", PhiB, weight);
 
+            plotter.fill("quarkMiss12", quarkMiss12, weight);
+            plotter.fill("ptMiss12", ptMiss12, weight);
+            //plotter.fill("mMiss12", mMiss12, weight);
+            plotter.fill("etaMiss12", etaMiss12, weight);
+            plotter.fill("yMiss12", yMiss12, weight);
+            plotter.fill("phiMiss12", phiMiss12, weight);
+            
+            plotter.fill("quarkMiss34", quarkMiss34, weight);
+            plotter.fill("ptMiss34", ptMiss34, weight);
+            //plotter.fill("mMiss34", mMiss34, weight);
+            plotter.fill("etaMiss34", etaMiss34, weight);
+            plotter.fill("yMiss34", yMiss34, weight);
+            plotter.fill("phiMiss34", phiMiss34, weight);
+            
+            plotter.fill("charge12", charge12, weight);
+            plotter.fill("charge34", charge34, weight);
+            
+            plotter.fill("bLeadStatus12", bLeadStatus12, weight);
+            plotter.fill("bLeadStatus34", bLeadStatus34, weight);
+            plotter.fill("bothBleading", bothBleading, weight);
+            plotter.fill("dijetsHaveTwoBquarks", dijetsHaveTwoBquarks, weight);
+            
+            plotter.fill("dR_sublead12", dR_sublead12, weight);
+            plotter.fill("dR_sublead34", dR_sublead34, weight);
+            plotter.fill("dR_lead12", dR_lead12, weight);
+            plotter.fill("dR_lead34", dR_lead34, weight);
+            
+            plotter.fill("dR_Wquarks12", dR_Wquarks12, weight);
+            plotter.fill("dR_Wquarks34", dR_Wquarks34, weight);
+            
+            plotter.fill("numJetsMatched", numJetsMatched, weight);
+            plotter.fill("numHadrons", numHadrons, weight);
+            plotter.fill("hadronMatchStatus", hadronMatchStatus, weight);
+            plotter.fill("alignStatus", alignStatus, weight);
+            plotter.fill("multiMatch", multiMatch, weight);
+            
+            plotter.fill("quark1", fabs(quark1), weight);
+            plotter.fill("quark2", fabs(quark2), weight);
+            plotter.fill("quark3", fabs(quark3), weight);
+            plotter.fill("quark4", fabs(quark4), weight);
+            
+            plotter.fill("deltaR1", deltaR1, weight);
+            plotter.fill("deltaR2", deltaR2, weight);
+            plotter.fill("deltaR3", deltaR3, weight);
+            plotter.fill("deltaR4", deltaR4, weight);
         }
     }
-    
+    /*
     plotter.plotAlone("TopVetoBDT", categories);
     plotter.plotAlone("dijets_cosThetaStar", categories);
     plotter.plotAlone("dijets_mH_cosThetaStar", categories);
@@ -268,9 +419,102 @@ int main( int argc, char** argv )
     plotter.plotAlone("before_mB", categories);
     plotter.plotAlone("before_etaB", categories);
     plotter.plotAlone("before_yB", categories);
-    plotter.plotAlone("before_PhiB", categories);
+    plotter.plotAlone("before_PhiB", categories);*/
+    
+    plotter.plotAlone("before_quarkMiss12", categories);
+    plotter.plotAlone("before_ptMiss12", categories);
+    //plotter.plotAlone("before_mMiss12", categories);
+    plotter.plotAlone("before_etaMiss12", categories);
+    plotter.plotAlone("before_yMiss12", categories);
+    plotter.plotAlone("before_phiMiss12", categories);
+    
+    plotter.plotAlone("before_quarkMiss34", categories);
+    plotter.plotAlone("before_ptMiss34", categories);
+    //plotter.plotAlone("before_mMiss34", categories);
+    plotter.plotAlone("before_etaMiss34", categories);
+    plotter.plotAlone("before_yMiss34", categories);
+    plotter.plotAlone("before_phiMiss34", categories);
+    
+    plotter.plotAlone("before_charge12", categories);
+    plotter.plotAlone("before_charge34", categories);
+    
+    plotter.plotAlone("before_bLeadStatus12", categories);
+    plotter.plotAlone("before_bLeadStatus34", categories);
+    plotter.plotAlone("before_bothBleading", categories);
+    plotter.plotAlone("before_dijetsHaveTwoBquarks", categories);
+    
+    plotter.plotAlone("before_dR_sublead12", categories);
+    plotter.plotAlone("before_dR_sublead34", categories);
+    plotter.plotAlone("before_dR_lead12", categories);
+    plotter.plotAlone("before_dR_lead34", categories);
+    
+    plotter.plotAlone("before_dR_Wquarks12", categories);
+    plotter.plotAlone("before_dR_Wquarks34", categories);
+    
+    plotter.plotAlone("before_numJetsMatched", categories);
+    plotter.plotAlone("before_numHadrons", categories);
+    plotter.plotAlone("before_hadronMatchStatus", categories);
+    plotter.plotAlone("before_alignStatus", categories);
+    plotter.plotAlone("before_multiMatch", categories);
+    
+    plotter.plotAlone("before_quark1", categories);
+    plotter.plotAlone("before_quark2", categories);
+    plotter.plotAlone("before_quark3", categories);
+    plotter.plotAlone("before_quark4", categories);
+    
+    plotter.plotAlone("before_deltaR1", categories);
+    plotter.plotAlone("before_deltaR2", categories);
+    plotter.plotAlone("before_deltaR3", categories);
+    plotter.plotAlone("before_deltaR4", categories);
+    
+    plotter.plotAlone("quarkMiss12", categories);
+    plotter.plotAlone("ptMiss12", categories);
+    //plotter.plotAlone("mMiss12", categories);
+    plotter.plotAlone("etaMiss12", categories);
+    plotter.plotAlone("yMiss12", categories);
+    plotter.plotAlone("phiMiss12", categories);
+    
+    plotter.plotAlone("quarkMiss34", categories);
+    plotter.plotAlone("ptMiss34", categories);
+    //plotter.plotAlone("mMiss34", categories);
+    plotter.plotAlone("etaMiss34", categories);
+    plotter.plotAlone("yMiss34", categories);
+    plotter.plotAlone("phiMiss34", categories);
+    
+    plotter.plotAlone("charge12", categories);
+    plotter.plotAlone("charge34", categories);
+    
+    plotter.plotAlone("bLeadStatus12", categories);
+    plotter.plotAlone("bLeadStatus34", categories);
+    plotter.plotAlone("bothBleading", categories);
+    plotter.plotAlone("dijetsHaveTwoBquarks", categories);
+    
+    plotter.plotAlone("dR_sublead12", categories);
+    plotter.plotAlone("dR_sublead34", categories);
+    plotter.plotAlone("dR_lead12", categories);
+    plotter.plotAlone("dR_lead34", categories);
+    
+    plotter.plotAlone("dR_Wquarks12", categories);
+    plotter.plotAlone("dR_Wquarks34", categories);
+    
+    plotter.plotAlone("numJetsMatched", categories);
+    plotter.plotAlone("numHadrons", categories);
+    plotter.plotAlone("hadronMatchStatus", categories);
+    plotter.plotAlone("alignStatus", categories);
+    plotter.plotAlone("multiMatch", categories);
+    
+    plotter.plotAlone("quark1", categories);
+    plotter.plotAlone("quark2", categories);
+    plotter.plotAlone("quark3", categories);
+    plotter.plotAlone("quark4", categories);
+    
+    plotter.plotAlone("deltaR1", categories);
+    plotter.plotAlone("deltaR2", categories);
+    plotter.plotAlone("deltaR3", categories);
+    plotter.plotAlone("deltaR4", categories);
     
     //Abusing the modified signal background plot functions
+    /*
     plotter.plotBeforeAfter("before_mX", "mX", categories);
     plotter.plotBeforeAfter("before_m12", "m12", categories);
     plotter.plotBeforeAfter("before_m34", "m34", categories);
@@ -295,6 +539,53 @@ int main( int argc, char** argv )
     plotter.plotBeforeAfter("before_etaB", "etaB", categories);
     plotter.plotBeforeAfter("before_yB", "yB", categories);
     plotter.plotBeforeAfter("before_PhiB", "PhiB", categories);
+    */
+    
+    plotter.plotBeforeAfter("before_quarkMiss12", "quarkMiss12", categories);
+    plotter.plotBeforeAfter("before_ptMiss12", "ptMiss12", categories);
+    plotter.plotBeforeAfter("before_mMiss12", "mMiss12", categories);
+    plotter.plotBeforeAfter("before_etaMiss12", "etaMiss12", categories);
+    plotter.plotBeforeAfter("before_yMiss12", "yMiss12", categories);
+    plotter.plotBeforeAfter("before_phiMiss12", "phiMiss12", categories);
+    
+    plotter.plotBeforeAfter("before_quarkMiss34", "quarkMiss34", categories);
+    plotter.plotBeforeAfter("before_ptMiss34", "ptMiss34", categories);
+    plotter.plotBeforeAfter("before_mMiss34", "mMiss34", categories);
+    plotter.plotBeforeAfter("before_etaMiss34", "etaMiss34", categories);
+    plotter.plotBeforeAfter("before_yMiss34", "yMiss34", categories);
+    plotter.plotBeforeAfter("before_phiMiss34", "phiMiss34", categories);
+    
+    plotter.plotBeforeAfter("before_charge12", "charge12", categories);
+    plotter.plotBeforeAfter("before_charge34", "charge34", categories);
+    
+    plotter.plotBeforeAfter("before_bLeadStatus12", "bLeadStatus12", categories);
+    plotter.plotBeforeAfter("before_bLeadStatus34", "bLeadStatus34", categories);
+    plotter.plotBeforeAfter("before_bothBleading", "bothBleading", categories);
+    plotter.plotBeforeAfter("before_dijetsHaveTwoBquarks", "dijetsHaveTwoBquarks", categories);
+    
+    plotter.plotBeforeAfter("before_dR_sublead12", "dR_sublead12", categories);
+    plotter.plotBeforeAfter("before_dR_sublead34", "dR_sublead34", categories);
+    plotter.plotBeforeAfter("before_dR_lead12", "dR_lead12", categories);
+    plotter.plotBeforeAfter("before_dR_lead34", "dR_lead34", categories);
+    
+    plotter.plotBeforeAfter("before_dR_Wquarks12", "dR_Wquarks12", categories);
+    plotter.plotBeforeAfter("before_dR_Wquarks34", "dR_Wquarks34", categories);
+    
+    plotter.plotBeforeAfter("before_numJetsMatched", "numJetsMatched", categories);
+    plotter.plotBeforeAfter("before_numHadrons", "numHadrons", categories);
+    plotter.plotBeforeAfter("before_hadronMatchStatus", "hadronMatchStatus", categories);
+    plotter.plotBeforeAfter("before_alignStatus", "alignStatus", categories);
+    plotter.plotBeforeAfter("before_multiMatch", "multiMatch", categories);
+    
+    plotter.plotBeforeAfter("before_quark1", "quark1", categories);
+    plotter.plotBeforeAfter("before_quark2", "quark2", categories);
+    plotter.plotBeforeAfter("before_quark3", "quark3", categories);
+    plotter.plotBeforeAfter("before_quark4", "quark4", categories);
+    
+    plotter.plotBeforeAfter("before_deltaR1", "deltaR1", categories);
+    plotter.plotBeforeAfter("before_deltaR2", "deltaR2",  categories);
+    plotter.plotBeforeAfter("before_deltaR3", "deltaR3",  categories);
+    plotter.plotBeforeAfter("before_deltaR4", "deltaR4",  categories);
     
     std::cout<<"--------------------Cut flow for all backgrounds:-----------------------------------------------------------"<<std::endl;
     printCutFlow(plotter, categories, "All backgrounds");
@@ -396,6 +687,98 @@ void bookPlots(LittlePlotter& plotter)
     plotter.book(new TH1F("etaB", ";eta_{B};Number of Events", 50,-5., 5.));
     plotter.book(new TH1F("yB", ";y_{B};Number of Events", 50, -2.5, 2.5));
     plotter.book(new TH1F("PhiB", ";#Phi_{B};Number of Events", 50, 0., 2*M_PI));
+    
+    plotter.book(new TH1F("before_quarkMiss12", ";pid (abs);Number of Events", 50, 0, 6));
+    //plotter.book(new TH1F("before_mMiss12", ";m_{Miss12} [GeV];Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("before_ptMiss12", ";X p_{Miss12} [GeV];Number of Events", 50, 0., 250.)); //events exist up to 350
+    plotter.book(new TH1F("before_etaMiss12", ";eta_{Miss12};Number of Events", 50,-5., 5.));
+    plotter.book(new TH1F("before_yMiss12", ";y_{Miss12};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("before_phiMiss12", ";#Phi_{Miss12};Number of Events", 50, 0., 2*M_PI));
+    
+    plotter.book(new TH1F("before_quarkMiss34", ";pid (abs);Number of Events", 50, 0, 6));
+    //plotter.book(new TH1F("before_mMiss34", ";m_{Miss34} [GeV];Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("before_ptMiss34", ";X p_{Miss34} [GeV];Number of Events", 50, 0., 250.));
+    plotter.book(new TH1F("before_etaMiss34", ";eta_{Miss34};Number of Events", 50,-5., 5.));
+    plotter.book(new TH1F("before_yMiss34", ";y_{Miss34};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("before_phiMiss34", ";#Phi_{Miss34};Number of Events", 50, 0., 2*M_PI));
+    
+    plotter.book(new TH1F("before_charge12", ";e_{12};Number of Events", 50, -2, 2));
+    plotter.book(new TH1F("before_charge34", ";e_{34};Number of Events", 50, -2, 2));
+    
+    plotter.book(new TH1F("before_bLeadStatus12", ";code_{12};Number of Events", 10, -0.5, 2.5));
+    plotter.book(new TH1F("before_bLeadStatus34", ";code_{34};Number of Events", 10, -0.5, 2.5));
+    plotter.book(new TH1F("before_bothBleading", ";code;Number of Events", 10, -0.5, 2.5));
+    plotter.book(new TH1F("before_dijetsHaveTwoBquarks", ";code;Number of Events", 10, -0.5, 2.5));
+    
+    plotter.book(new TH1F("before_dR_sublead12", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("before_dR_sublead34", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("before_dR_lead12", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("before_dR_lead34", ";dR;Number of Events", 50, 0, 5));
+    
+    plotter.book(new TH1F("before_dR_Wquarks12", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("before_dR_Wquarks34", ";dR;Number of Events", 50, 0, 5));
+    
+    plotter.book(new TH1F("before_numJetsMatched", ";number;Number of Events", 30, -0.5, 4.5));
+    plotter.book(new TH1F("before_numHadrons", ";number;Number of Events", 30, -0.5, 6.5));
+    plotter.book(new TH1F("before_hadronMatchStatus", ";code;Number of Events", 50, -7.5, 7.5));
+    plotter.book(new TH1F("before_alignStatus", ";code;Number of Events", 10, -0.5, 2.5));
+    plotter.book(new TH1F("before_multiMatch", ";flag;Number of Events", 10, -0.5, 1.5));
+    
+    plotter.book(new TH1F("before_quark1", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("before_quark2", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("before_quark3", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("before_quark4", ";pid (abs);Number of Events", 50, 0, 6));
+    
+    plotter.book(new TH1F("before_deltaR1", ";dR;Number of Events", 50, 0, 0.3));
+    plotter.book(new TH1F("before_deltaR2", ";dR;Number of Events", 50, 0, 0.3));
+    plotter.book(new TH1F("before_deltaR3", ";dR;Number of Events", 50, 0, 0.3));
+    plotter.book(new TH1F("before_deltaR4", ";dR;Number of Events", 50, 0, 0.3));
+
+    plotter.book(new TH1F("quarkMiss12", ";pid (abs);Number of Events", 50, 0, 6));
+    //plotter.book(new TH1F("mMiss12", ";m_{Miss12} [GeV];Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("ptMiss12", ";X p_{Miss12} [GeV];Number of Events", 50, 0., 250.));
+    plotter.book(new TH1F("etaMiss12", ";eta_{Miss12};Number of Events", 50,-5., 5.));
+    plotter.book(new TH1F("yMiss12", ";y_{Miss12};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("phiMiss12", ";#Phi_{Miss12};Number of Events", 50, 0., 2*M_PI));
+    
+    plotter.book(new TH1F("quarkMiss34", ";pid (abs);Number of Events", 50, 0, 6));
+    //plotter.book(new TH1F("mMiss34", ";m_{Miss34} [GeV];Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("ptMiss34", ";X p_{Miss34} [GeV];Number of Events", 50, 0., 250.));
+    plotter.book(new TH1F("etaMiss34", ";eta_{Miss34};Number of Events", 50,-5., 5.));
+    plotter.book(new TH1F("yMiss34", ";y_{Miss34};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("phiMiss34", ";#Phi_{Miss34};Number of Events", 50, 0., 2*M_PI));
+    
+    plotter.book(new TH1F("charge12", ";e_{12};Number of Events", 50, -2, 2));
+    plotter.book(new TH1F("charge34", ";e_{34};Number of Events", 50, -2, 2));
+    
+    plotter.book(new TH1F("bLeadStatus12", ";code_{12};Number of Events", 10, -0.5, 2.5));
+    plotter.book(new TH1F("bLeadStatus34", ";code_{34};Number of Events", 10, -0.5, 2.5));
+    plotter.book(new TH1F("bothBleading", ";code;Number of Events", 10, -0.5, 2.5));
+    plotter.book(new TH1F("dijetsHaveTwoBquarks", ";code;Number of Events", 10, -0.5, 2.5));
+    
+    plotter.book(new TH1F("dR_sublead12", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("dR_sublead34", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("dR_lead12", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("dR_lead34", ";dR;Number of Events", 50, 0, 5));
+    
+    plotter.book(new TH1F("dR_Wquarks12", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("dR_Wquarks34", ";dR;Number of Events", 50, 0, 5));
+    
+    plotter.book(new TH1F("numJetsMatched", ";number;Number of Events", 30, -0.5, 4.5));
+    plotter.book(new TH1F("numHadrons", ";number;Number of Events", 30, -0.5, 6.5));
+    plotter.book(new TH1F("hadronMatchStatus", ";code;Number of Events", 50, -7.5, 7.5));
+    plotter.book(new TH1F("alignStatus", ";code;Number of Events", 10, -0.5, 2.5));
+    plotter.book(new TH1F("multiMatch", ";flag;Number of Events", 10, -0.5, 1.5));
+    
+    plotter.book(new TH1F("quark1", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("quark2", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("quark3", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("quark4", ";pid (abs);Number of Events", 50, 0, 6));
+
+    plotter.book(new TH1F("deltaR1", ";dR;Number of Events", 50, 0, 0.3));
+    plotter.book(new TH1F("deltaR2", ";dR;Number of Events", 50, 0, 0.3));
+    plotter.book(new TH1F("deltaR3", ";dR;Number of Events", 50, 0, 0.3));
+    plotter.book(new TH1F("deltaR4", ";dR;Number of Events", 50, 0, 0.3));
     
     plotter.book(new TH1F("TopVetoBDT", ";Top Veto BDT Output;Number of Events", 50, -1., 1.));
 
