@@ -47,7 +47,7 @@ int main( int argc, char** argv )
     
     double quarkMiss12, ptMiss12, etaMiss12, phiMiss12, yMiss12, mMiss12;
     double quarkMiss34, ptMiss34, etaMiss34, phiMiss34, yMiss34, mMiss34;
-    double numJetsMatched, numHadrons, hadronMatchStatus, alignStatus, multiMatch;
+    double numJetsMatched, numQuarks, quarkMatchStatus, alignStatus, multiMatch;
     double charge12, charge34;
     double bLeadStatus12, bLeadStatus34;
     double dijetsHaveTwoBquarks, bothBleading;
@@ -56,6 +56,10 @@ int main( int argc, char** argv )
     double dR_Wquarks12, dR_Wquarks34;
     double quark1, quark2, quark3, quark4;
     double deltaR1, deltaR2, deltaR3, deltaR4;
+    
+    double numNonDup, ptMinAll, etaMaxAll, numClosestFound, multiMatch3rd, num3rdJetsMatched, sameClosest, _3rdMatchStatus;
+    double quarkMatched3rdJet12, pt3rdJet12, eta3rdJet12, phi3rdJet12, y3rdJet12, m3rdJet12, dR3rdJet12, dRMatched3rdJet12;
+    double quarkMatched3rdJet34, pt3rdJet34, eta3rdJet34, phi3rdJet34, y3rdJet34, m3rdJet34, dR3rdJet34, dRMatched3rdJet34;
     
     //Annoyingly, TMVA::Reader can only use floats, not doubles! So, duplicate everything.
     float f_cosThetaStar, abs_cosTheta1, abs_cosTheta2, modPhi1, f_phi;
@@ -179,8 +183,8 @@ int main( int argc, char** argv )
         tree->SetBranchAddress("dR_Wquarks34", &dR_Wquarks34);
         
         tree->SetBranchAddress("numJetsMatched", &numJetsMatched);
-        tree->SetBranchAddress("numHadrons", &numHadrons);
-        tree->SetBranchAddress("hadronMatchStatus", &hadronMatchStatus);
+        tree->SetBranchAddress("numQuarks", &numQuarks);
+        tree->SetBranchAddress("quarkMatchStatus", &quarkMatchStatus);
         tree->SetBranchAddress("alignStatus", &alignStatus);
         tree->SetBranchAddress("multiMatch", &multiMatch);
         
@@ -193,6 +197,38 @@ int main( int argc, char** argv )
         tree->SetBranchAddress("deltaR2", &deltaR2);
         tree->SetBranchAddress("deltaR3", &deltaR3);
         tree->SetBranchAddress("deltaR4", &deltaR4);
+        
+        tree->SetBranchAddress("numNonDup", &numNonDup);
+        tree->SetBranchAddress("ptMinAll", &ptMinAll);
+        tree->SetBranchAddress("etaMaxAll", &etaMaxAll);
+        tree->SetBranchAddress("numClosestFound", &numClosestFound);
+        tree->SetBranchAddress("multiMatch3rd", &multiMatch3rd);
+        tree->SetBranchAddress("num3rdJetsMatched", &num3rdJetsMatched);
+        tree->SetBranchAddress("sameClosest", &sameClosest);
+        tree->SetBranchAddress("3rdMatchStatus", &_3rdMatchStatus);
+        
+        tree->SetBranchAddress("quarkMatched3rdJet12", &quarkMatched3rdJet12);
+        tree->SetBranchAddress("pt3rdJet12", &pt3rdJet12);
+        tree->SetBranchAddress("m3rdJet12", &m3rdJet12);
+        tree->SetBranchAddress("eta3rdJet12", &eta3rdJet12);
+        tree->SetBranchAddress("y3rdJet12", &y3rdJet12);
+        tree->SetBranchAddress("phi3rdJet12", &phi3rdJet12);
+        
+        tree->SetBranchAddress("quarkMatched3rdJet34", &quarkMatched3rdJet34);
+        tree->SetBranchAddress("pt3rdJet34", &pt3rdJet34);
+        tree->SetBranchAddress("m3rdJet34", &m3rdJet34);
+        tree->SetBranchAddress("eta3rdJet34", &eta3rdJet34);
+        tree->SetBranchAddress("y3rdJet34", &y3rdJet34);
+        tree->SetBranchAddress("phi3rdJet34", &phi3rdJet34);
+        
+        tree->SetBranchAddress("dR3rdJet12", &dR3rdJet12);
+        tree->SetBranchAddress("dRMatched3rdJet12", &dRMatched3rdJet12);
+        
+        tree->SetBranchAddress("dR3rdJet34", &dR3rdJet34);
+        tree->SetBranchAddress("dRMatched3rdJet34", &dRMatched3rdJet34);
+        
+        
+        
 
         
         for(int i = 0; i < nEvents; ++i)
@@ -279,8 +315,8 @@ int main( int argc, char** argv )
             plotter.fill("before_dR_Wquarks34", dR_Wquarks34, weight);
             
             plotter.fill("before_numJetsMatched", numJetsMatched, weight);
-            plotter.fill("before_numHadrons", numHadrons, weight);
-            plotter.fill("before_hadronMatchStatus", hadronMatchStatus, weight);
+            plotter.fill("before_numQuarks", numQuarks, weight);
+            plotter.fill("before_quarkMatchStatus", quarkMatchStatus, weight);
             plotter.fill("before_alignStatus", alignStatus, weight);
             plotter.fill("before_multiMatch", multiMatch, weight);
             
@@ -294,6 +330,34 @@ int main( int argc, char** argv )
             plotter.fill("before_deltaR3", deltaR3, weight);
             plotter.fill("before_deltaR4", deltaR4, weight);
             
+            plotter.fill("before_numNonDup", numNonDup, weight);
+            plotter.fill("before_ptMinAll", ptMinAll, weight);
+            plotter.fill("before_etaMaxAll", etaMaxAll, weight);
+            plotter.fill("before_numClosestFound", numClosestFound, weight);
+            plotter.fill("before_multiMatch3rd", multiMatch3rd, weight);
+            plotter.fill("before_num3rdJetsMatched", num3rdJetsMatched, weight);
+            plotter.fill("before_sameClosest", sameClosest, weight);
+            plotter.fill("before_3rdMatchStatus", _3rdMatchStatus, weight);
+            
+            plotter.fill("before_quarkMatched3rdJet12", fabs(quarkMatched3rdJet12), weight);
+            plotter.fill("before_pt3rdJet12", pt3rdJet12, weight);
+            plotter.fill("before_m3rdJet12", m3rdJet12, weight);
+            plotter.fill("before_eta3rdJet12", eta3rdJet12, weight);
+            plotter.fill("before_y3rdJet12", y3rdJet12, weight);
+            plotter.fill("before_phi3rdJet12", phi3rdJet12, weight);
+            
+            plotter.fill("before_quarkMatched3rdJet34", fabs(quarkMatched3rdJet34), weight);
+            plotter.fill("before_pt3rdJet34", pt3rdJet34, weight);
+            plotter.fill("before_m3rdJet34", m3rdJet34, weight);
+            plotter.fill("before_eta3rdJet34", eta3rdJet34, weight);
+            plotter.fill("before_y3rdJet34", y3rdJet34, weight);
+            plotter.fill("before_phi3rdJet34", phi3rdJet34, weight);
+            
+            plotter.fill("before_dR3rdJet12", dR3rdJet12, weight);
+            plotter.fill("before_dRMatched3rdJet12", dRMatched3rdJet12, weight);
+            
+            plotter.fill("before_dR3rdJet34", dR3rdJet34, weight);
+            plotter.fill("before_dRMatched3rdJet34", dRMatched3rdJet34, weight);
             
             //Apply top veto.
             float topMVA = topVeto->EvaluateMVA("BDT");
@@ -358,8 +422,8 @@ int main( int argc, char** argv )
             plotter.fill("dR_Wquarks34", dR_Wquarks34, weight);
             
             plotter.fill("numJetsMatched", numJetsMatched, weight);
-            plotter.fill("numHadrons", numHadrons, weight);
-            plotter.fill("hadronMatchStatus", hadronMatchStatus, weight);
+            plotter.fill("numQuarks", numQuarks, weight);
+            plotter.fill("quarkMatchStatus", quarkMatchStatus, weight);
             plotter.fill("alignStatus", alignStatus, weight);
             plotter.fill("multiMatch", multiMatch, weight);
             
@@ -372,6 +436,35 @@ int main( int argc, char** argv )
             plotter.fill("deltaR2", deltaR2, weight);
             plotter.fill("deltaR3", deltaR3, weight);
             plotter.fill("deltaR4", deltaR4, weight);
+            
+            plotter.fill("numNonDup", numNonDup, weight);
+            plotter.fill("ptMinAll", ptMinAll, weight);
+            plotter.fill("etaMaxAll", etaMaxAll, weight);
+            plotter.fill("numClosestFound", numClosestFound, weight);
+            plotter.fill("multiMatch3rd", multiMatch3rd, weight);
+            plotter.fill("num3rdJetsMatched", num3rdJetsMatched, weight);
+            plotter.fill("sameClosest", sameClosest, weight);
+            plotter.fill("3rdMatchStatus", _3rdMatchStatus, weight);
+            
+            plotter.fill("quarkMatched3rdJet12", quarkMatched3rdJet12, weight);
+            plotter.fill("pt3rdJet12", pt3rdJet12, weight);
+            plotter.fill("m3rdJet12", m3rdJet12, weight);
+            plotter.fill("eta3rdJet12", eta3rdJet12, weight);
+            plotter.fill("y3rdJet12", y3rdJet12, weight);
+            plotter.fill("phi3rdJet12", phi3rdJet12, weight);
+            
+            plotter.fill("quarkMatched3rdJet34", quarkMatched3rdJet34, weight);
+            plotter.fill("pt3rdJet34", pt3rdJet34, weight);
+            plotter.fill("m3rdJet34", m3rdJet34, weight);
+            plotter.fill("eta3rdJet34", eta3rdJet34, weight);
+            plotter.fill("y3rdJet34", y3rdJet34, weight);
+            plotter.fill("phi3rdJet34", phi3rdJet34, weight);
+            
+            plotter.fill("dR3rdJet12", dR3rdJet12, weight);
+            plotter.fill("dRMatched3rdJet12", dRMatched3rdJet12, weight);
+            
+            plotter.fill("dR3rdJet34", dR3rdJet34, weight);
+            plotter.fill("dRMatched3rdJet34", dRMatched3rdJet34, weight);
         }
     }
     /*
@@ -420,7 +513,7 @@ int main( int argc, char** argv )
     plotter.plotAlone("before_etaB", categories);
     plotter.plotAlone("before_yB", categories);
     plotter.plotAlone("before_PhiB", categories);*/
-    
+    /*
     plotter.plotAlone("before_quarkMiss12", categories);
     plotter.plotAlone("before_ptMiss12", categories);
     //plotter.plotAlone("before_mMiss12", categories);
@@ -452,8 +545,8 @@ int main( int argc, char** argv )
     plotter.plotAlone("before_dR_Wquarks34", categories);
     
     plotter.plotAlone("before_numJetsMatched", categories);
-    plotter.plotAlone("before_numHadrons", categories);
-    plotter.plotAlone("before_hadronMatchStatus", categories);
+    plotter.plotAlone("before_numQuarks", categories);
+    plotter.plotAlone("before_quarkMatchStatus", categories);
     plotter.plotAlone("before_alignStatus", categories);
     plotter.plotAlone("before_multiMatch", categories);
     
@@ -498,8 +591,8 @@ int main( int argc, char** argv )
     plotter.plotAlone("dR_Wquarks34", categories);
     
     plotter.plotAlone("numJetsMatched", categories);
-    plotter.plotAlone("numHadrons", categories);
-    plotter.plotAlone("hadronMatchStatus", categories);
+    plotter.plotAlone("numQuarks", categories);
+    plotter.plotAlone("quarkMatchStatus", categories);
     plotter.plotAlone("alignStatus", categories);
     plotter.plotAlone("multiMatch", categories);
     
@@ -512,7 +605,7 @@ int main( int argc, char** argv )
     plotter.plotAlone("deltaR2", categories);
     plotter.plotAlone("deltaR3", categories);
     plotter.plotAlone("deltaR4", categories);
-    
+    */
     //Abusing the modified signal background plot functions
     /*
     plotter.plotBeforeAfter("before_mX", "mX", categories);
@@ -540,7 +633,7 @@ int main( int argc, char** argv )
     plotter.plotBeforeAfter("before_yB", "yB", categories);
     plotter.plotBeforeAfter("before_PhiB", "PhiB", categories);
     */
-    
+    /*
     plotter.plotBeforeAfter("before_quarkMiss12", "quarkMiss12", categories);
     plotter.plotBeforeAfter("before_ptMiss12", "ptMiss12", categories);
     plotter.plotBeforeAfter("before_mMiss12", "mMiss12", categories);
@@ -572,8 +665,8 @@ int main( int argc, char** argv )
     plotter.plotBeforeAfter("before_dR_Wquarks34", "dR_Wquarks34", categories);
     
     plotter.plotBeforeAfter("before_numJetsMatched", "numJetsMatched", categories);
-    plotter.plotBeforeAfter("before_numHadrons", "numHadrons", categories);
-    plotter.plotBeforeAfter("before_hadronMatchStatus", "hadronMatchStatus", categories);
+    plotter.plotBeforeAfter("before_numQuarks", "numQuarks", categories);
+    plotter.plotBeforeAfter("before_quarkMatchStatus", "quarkMatchStatus", categories);
     plotter.plotBeforeAfter("before_alignStatus", "alignStatus", categories);
     plotter.plotBeforeAfter("before_multiMatch", "multiMatch", categories);
     
@@ -586,6 +679,35 @@ int main( int argc, char** argv )
     plotter.plotBeforeAfter("before_deltaR2", "deltaR2",  categories);
     plotter.plotBeforeAfter("before_deltaR3", "deltaR3",  categories);
     plotter.plotBeforeAfter("before_deltaR4", "deltaR4",  categories);
+    */
+    plotter.plotBeforeAfter("before_numNonDup", "numNonDup",  categories);
+    plotter.plotBeforeAfter("before_ptMinAll", "ptMinAll",  categories);
+    plotter.plotBeforeAfter("before_etaMaxAll", "etaMaxAll",  categories);
+    plotter.plotBeforeAfter("before_numClosestFound", "numClosestFound",  categories);
+    plotter.plotBeforeAfter("before_multiMatch3rd", "multiMatch3rd",  categories);
+    plotter.plotBeforeAfter("before_num3rdJetsMatched", "num3rdJetsMatched",  categories);
+    plotter.plotBeforeAfter("before_sameClosest", "sameClosest",  categories);
+    plotter.plotBeforeAfter("before_3rdMatchStatus", "3rdMatchStatus",  categories);
+    
+    plotter.plotBeforeAfter("before_quarkMatched3rdJet12", "quarkMatched3rdJet12",  categories);
+    plotter.plotBeforeAfter("before_pt3rdJet12", "pt3rdJet12",  categories);
+    plotter.plotBeforeAfter("before_m3rdJet12", "m3rdJet12",  categories);
+    plotter.plotBeforeAfter("before_eta3rdJet12", "eta3rdJet12",  categories);
+    plotter.plotBeforeAfter("before_y3rdJet12", "y3rdJet12",  categories);
+    plotter.plotBeforeAfter("before_phi3rdJet12", "phi3rdJet12",  categories);
+    
+    plotter.plotBeforeAfter("before_quarkMatched3rdJet34", "quarkMatched3rdJet34",  categories);
+    plotter.plotBeforeAfter("before_pt3rdJet34", "pt3rdJet34",  categories);
+    plotter.plotBeforeAfter("before_m3rdJet34", "m3rdJet34",  categories);
+    plotter.plotBeforeAfter("before_eta3rdJet34", "eta3rdJet34",  categories);
+    plotter.plotBeforeAfter("before_y3rdJet34", "y3rdJet34",  categories);
+    plotter.plotBeforeAfter("before_phi3rdJet34", "phi3rdJet34",  categories);
+    
+    plotter.plotBeforeAfter("before_dR3rdJet12", "dR3rdJet12",  categories);
+    plotter.plotBeforeAfter("before_dRMatched3rdJet12", "dRMatched3rdJet12",  categories);
+    
+    plotter.plotBeforeAfter("before_dR3rdJet34", "dR3rdJet34",  categories);
+    plotter.plotBeforeAfter("before_dRMatched3rdJet34", "dRMatched3rdJet34",  categories);
     
     std::cout<<"--------------------Cut flow for all backgrounds:-----------------------------------------------------------"<<std::endl;
     printCutFlow(plotter, categories, "All backgrounds");
@@ -719,8 +841,8 @@ void bookPlots(LittlePlotter& plotter)
     plotter.book(new TH1F("before_dR_Wquarks34", ";dR;Number of Events", 50, 0, 5));
     
     plotter.book(new TH1F("before_numJetsMatched", ";number;Number of Events", 30, -0.5, 4.5));
-    plotter.book(new TH1F("before_numHadrons", ";number;Number of Events", 30, -0.5, 6.5));
-    plotter.book(new TH1F("before_hadronMatchStatus", ";code;Number of Events", 50, -7.5, 7.5));
+    plotter.book(new TH1F("before_numQuarks", ";number;Number of Events", 30, -0.5, 6.5));
+    plotter.book(new TH1F("before_quarkMatchStatus", ";code;Number of Events", 50, -7.5, 7.5));
     plotter.book(new TH1F("before_alignStatus", ";code;Number of Events", 10, -0.5, 2.5));
     plotter.book(new TH1F("before_multiMatch", ";flag;Number of Events", 10, -0.5, 1.5));
     
@@ -733,6 +855,35 @@ void bookPlots(LittlePlotter& plotter)
     plotter.book(new TH1F("before_deltaR2", ";dR;Number of Events", 50, 0, 0.3));
     plotter.book(new TH1F("before_deltaR3", ";dR;Number of Events", 50, 0, 0.3));
     plotter.book(new TH1F("before_deltaR4", ";dR;Number of Events", 50, 0, 0.3));
+    
+    plotter.book(new TH1F("before_numNonDup", ";number;Number of Events", 50, -0.5, 12.5));
+    plotter.book(new TH1F("before_ptMinAll", ";X p [GeV];Number of Events", 50, 0., 500.));
+    plotter.book(new TH1F("before_etaMaxAll", ";eta;Number of Events", 50,0., 5.));
+    plotter.book(new TH1F("before_numClosestFound", ";number;Number of Events", 50, -0.5, 2.5));
+    plotter.book(new TH1F("before_multiMatch3rd", ";flag;Number of Events", 10, -0.5, 1.5));
+    plotter.book(new TH1F("before_num3rdJetsMatched", ";flag;Number of Events", 10, -0.5, 2.5));
+    plotter.book(new TH1F("before_sameClosest", ";flag;Number of Events", 10, -0.5, 1.5));
+    plotter.book(new TH1F("before_3rdMatchStatus", ";code;Number of Events", 50, -3.5, 3.5));
+    
+    plotter.book(new TH1F("before_quarkMatched3rdJet12", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("before_pt3rdJet12", ";X p_{3rdJet12} [GeV];Number of Events", 50, 0., 250.));
+    plotter.book(new TH1F("before_m3rdJet12", ";m_{3rdJet12} [GeV];Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("before_eta3rdJet12", ";eta_{3rdJet12};Number of Events", 50,-5., 5.));
+    plotter.book(new TH1F("before_y3rdJet12", ";y_{3rdJet12};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("before_phi3rdJet12", ";#Phi_{3rdJet12};Number of Events", 50, 0., 2*M_PI));
+    
+    plotter.book(new TH1F("before_quarkMatched3rdJet34", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("before_pt3rdJet34", ";X p_{3rdJet34} [GeV];Number of Events", 50, 0., 250.));
+    plotter.book(new TH1F("before_m3rdJet34", ";m_{3rdJet34} [GeV];Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("before_eta3rdJet34", ";eta_{3rdJet34};Number of Events", 50,-5., 5.));
+    plotter.book(new TH1F("before_y3rdJet34", ";y_{3rdJet34};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("before_phi3rdJet34", ";#Phi_{3rdJet34};Number of Events", 50, 0., 2*M_PI));
+    
+    plotter.book(new TH1F("before_dR3rdJet12", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("before_dRMatched3rdJet12", ";dR;Number of Events", 50, 0, 0.3));
+    
+    plotter.book(new TH1F("before_dR3rdJet34", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("before_dRMatched3rdJet34", ";dR;Number of Events", 50, 0, 0.3));
 
     plotter.book(new TH1F("quarkMiss12", ";pid (abs);Number of Events", 50, 0, 6));
     //plotter.book(new TH1F("mMiss12", ";m_{Miss12} [GeV];Number of Events", 50, 0., 5.));
@@ -765,8 +916,8 @@ void bookPlots(LittlePlotter& plotter)
     plotter.book(new TH1F("dR_Wquarks34", ";dR;Number of Events", 50, 0, 5));
     
     plotter.book(new TH1F("numJetsMatched", ";number;Number of Events", 30, -0.5, 4.5));
-    plotter.book(new TH1F("numHadrons", ";number;Number of Events", 30, -0.5, 6.5));
-    plotter.book(new TH1F("hadronMatchStatus", ";code;Number of Events", 50, -7.5, 7.5));
+    plotter.book(new TH1F("numQuarks", ";number;Number of Events", 30, -0.5, 6.5));
+    plotter.book(new TH1F("quarkMatchStatus", ";code;Number of Events", 50, -7.5, 7.5));
     plotter.book(new TH1F("alignStatus", ";code;Number of Events", 10, -0.5, 2.5));
     plotter.book(new TH1F("multiMatch", ";flag;Number of Events", 10, -0.5, 1.5));
     
@@ -779,6 +930,35 @@ void bookPlots(LittlePlotter& plotter)
     plotter.book(new TH1F("deltaR2", ";dR;Number of Events", 50, 0, 0.3));
     plotter.book(new TH1F("deltaR3", ";dR;Number of Events", 50, 0, 0.3));
     plotter.book(new TH1F("deltaR4", ";dR;Number of Events", 50, 0, 0.3));
+    
+    plotter.book(new TH1F("numNonDup", ";number;Number of Events", 50, -0.5, 12.5));
+    plotter.book(new TH1F("ptMinAll", ";X p [GeV];Number of Events", 50, 0., 500.));
+    plotter.book(new TH1F("etaMaxAll", ";eta;Number of Events", 50,0., 5.));
+    plotter.book(new TH1F("numClosestFound", ";number;Number of Events", 50, -0.5, 2.5));
+    plotter.book(new TH1F("multiMatch3rd", ";flag;Number of Events", 10, -0.5, 1.5));
+    plotter.book(new TH1F("num3rdJetsMatched", ";flag;Number of Events", 10, -0.5, 2.5));
+    plotter.book(new TH1F("sameClosest", ";flag;Number of Events", 10, -0.5, 1.5));
+    plotter.book(new TH1F("3rdMatchStatus", ";code;Number of Events", 50, -3.5, 3.5));
+    
+    plotter.book(new TH1F("quarkMatched3rdJet12", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("pt3rdJet12", ";X p_{3rdJet12} [GeV];Number of Events", 50, 0., 250.));
+    plotter.book(new TH1F("m3rdJet12", ";m_{3rdJet12} [GeV];Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("eta3rdJet12", ";eta_{3rdJet12};Number of Events", 50,-5., 5.));
+    plotter.book(new TH1F("y3rdJet12", ";y_{3rdJet12};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("phi3rdJet12", ";#Phi_{3rdJet12};Number of Events", 50, 0., 2*M_PI));
+    
+    plotter.book(new TH1F("quarkMatched3rdJet34", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("pt3rdJet34", ";X p_{3rdJet34} [GeV];Number of Events", 50, 0., 250.));
+    plotter.book(new TH1F("m3rdJet34", ";m_{3rdJet34} [GeV];Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("eta3rdJet34", ";eta_{3rdJet34};Number of Events", 50,-5., 5.));
+    plotter.book(new TH1F("y3rdJet34", ";y_{3rdJet34};Number of Events", 50, -2.5, 2.5));
+    plotter.book(new TH1F("phi3rdJet34", ";#Phi_{3rdJet34};Number of Events", 50, 0., 2*M_PI));
+    
+    plotter.book(new TH1F("dR3rdJet12", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("dRMatched3rdJet12", ";dR;Number of Events", 50, 0, 0.3));
+    
+    plotter.book(new TH1F("dR3rdJet34", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("dRMatched3rdJet34", ";dR;Number of Events", 50, 0, 0.3));
     
     plotter.book(new TH1F("TopVetoBDT", ";Top Veto BDT Output;Number of Events", 50, -1., 1.));
 
