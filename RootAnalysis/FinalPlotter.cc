@@ -17,6 +17,7 @@ std::string formatNumberForTable(float num);
 
 void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std::string caption);
 void setupFileList(std::vector<TFile*>& files);
+void printTtbarStats(LittlePlotter& plotter);
 
 void setupTrees(const std::vector<TFile*>& files, std::vector<TString>& categories, std::map<TString, TTree*>& trees, std::map<TString, TTree*>& metaTrees);
 
@@ -61,6 +62,8 @@ int main( int argc, char** argv )
     double quarkMatched3rdJet12, pt3rdJet12, eta3rdJet12, phi3rdJet12, y3rdJet12, m3rdJet12, dR3rdJet12, dRMatched3rdJet12;
     double quarkMatched3rdJet34, pt3rdJet34, eta3rdJet34, phi3rdJet34, y3rdJet34, m3rdJet34, dR3rdJet34, dRMatched3rdJet34;
     
+    double numClosestPass12, numClosestPass34;
+    
     //Annoyingly, TMVA::Reader can only use floats, not doubles! So, duplicate everything.
     float f_cosThetaStar, abs_cosTheta1, abs_cosTheta2, modPhi1, f_phi;
     float f_ptX, f_yX, f_mX, f_cosTheta1, f_cosTheta2;
@@ -75,7 +78,15 @@ int main( int argc, char** argv )
     
     LittlePlotter plotter(categories);
     bookPlots(plotter);
-    
+    //These are interim code inserted to produce 2D plots. Needs cleaning up/more elegant solution.
+    //To activate, search "2Dplot" and uncomment
+    /*
+    TH2F *h12 = new TH2F("charge12","charge34",50, -2, 2, 50, -2, 2);
+    TH2F *pq12 = new TH2F("pt12","dR_Wquarks12",50, 100., 700., 50, 0., 5.);
+    TH2F *pq34 = new TH2F("pt34","dR_Wquarks34",50, 100., 700., 50, 0., 5.);
+    TH2F *p12 = new TH2F("pt12","dRW12",50, 100., 700., 50, 0., 5.);
+    TH2F *p34 = new TH2F("pt34","dRW34",50, 100., 700., 50, 0., 5.);
+    */
     for(std::map<TString, TTree*>::iterator treeIt = trees.begin(); treeIt != trees.end(); ++treeIt)
     {
         plotter.setCurrentCat(treeIt->first);
@@ -227,7 +238,8 @@ int main( int argc, char** argv )
         tree->SetBranchAddress("dR3rdJet34", &dR3rdJet34);
         tree->SetBranchAddress("dRMatched3rdJet34", &dRMatched3rdJet34);
         
-        
+        tree->SetBranchAddress("numClosestPass12", &numClosestPass12);
+        tree->SetBranchAddress("numClosestPass34", &numClosestPass34);
         
 
         
@@ -258,6 +270,15 @@ int main( int argc, char** argv )
             plotter.fill("dijets_mH_cosThetaStar", cosThetaStar, weight);
             f_mW12 = mW12; f_mt12 = mt12; f_dRW12 = dRW12; f_mW34 = mW34; f_mt34 = mt34; f_dRW34 = dRW34;
             
+            //2D Plots fun
+            //2Dplot
+            /*
+            h12->Fill(charge12,charge34);
+            pq12->Fill(pt12,dR_Wquarks12);
+            pq34->Fill(pt34,dR_Wquarks34);
+            p12->Fill(pt12,dRW12);
+            p34->Fill(pt34,dRW34);
+            */
             //Fill plots before top veto
             plotter.fill("before_mX", mX, weight);
             plotter.fill("before_m12", m12, weight);
@@ -358,6 +379,12 @@ int main( int argc, char** argv )
             
             plotter.fill("before_dR3rdJet34", dR3rdJet34, weight);
             plotter.fill("before_dRMatched3rdJet34", dRMatched3rdJet34, weight);
+            
+            plotter.fill("before_dRW12", dRW12, weight);
+            plotter.fill("before_dRW34", dRW34, weight);
+            
+            plotter.fill("before_numClosestPass12", numClosestPass12, weight);
+            plotter.fill("before_numClosestPass34", numClosestPass34, weight);
             
             //Apply top veto.
             float topMVA = topVeto->EvaluateMVA("BDT");
@@ -465,6 +492,12 @@ int main( int argc, char** argv )
             
             plotter.fill("dR3rdJet34", dR3rdJet34, weight);
             plotter.fill("dRMatched3rdJet34", dRMatched3rdJet34, weight);
+            
+            plotter.fill("dRW12", dRW12, weight);
+            plotter.fill("dRW34", dRW34, weight);
+            
+            plotter.fill("numClosestPass12", numClosestPass12, weight);
+            plotter.fill("numClosestPass34", numClosestPass34, weight);
         }
     }
     /*
@@ -633,17 +666,49 @@ int main( int argc, char** argv )
     plotter.plotBeforeAfter("before_yB", "yB", categories);
     plotter.plotBeforeAfter("before_PhiB", "PhiB", categories);
     */
+    //2Dplot
     /*
+    TCanvas *charge = new TCanvas("charge","charge12 vs charge34", 3000, 2500);
+    charge->cd(1);
+    h12->SetXTitle("charge12");
+    h12->SetYTitle("charge34");
+    h12->Draw("colz");
+    charge->Print("charge.pdf","pdf");
+    TCanvas *ptdRWq12 = new TCanvas("ptdRWq12","pt12 vs dR_Wquark12", 3000, 2500);
+    ptdRWq12->cd(1);
+    pq12->SetXTitle("pt12");
+    pq12->SetYTitle("dR_Wquark12");
+    pq12->Draw("colz");
+    ptdRWq12->Print("ptdRWq12.pdf","pdf");
+    TCanvas *ptdRWq34 = new TCanvas("ptdRWq34","pt34 vs dR_Wquark34", 3000, 2500);
+    ptdRWq34->cd(1);
+    pq34->SetXTitle("pt34");
+    pq34->SetYTitle("dR_Wquark34");
+    pq34 ->Draw("colz");
+    ptdRWq34->Print("ptdRWq34.pdf","pdf");
+    TCanvas *ptdRW12 = new TCanvas("ptdRW12","pt12 vs dRW12", 3000, 2500);
+    ptdRW12->cd(1);
+    p12->SetXTitle("pt12");
+    p12->SetYTitle("dRW12");
+    p12->Draw("colz");
+    ptdRW12->Print("ptdRW12.pdf","pdf");
+    TCanvas *ptdRW34 = new TCanvas("ptdRW34","pt34 vs dRW34", 3000, 2500);
+    ptdRW34->cd(1);
+    p34->SetXTitle("pt34");
+    p34->SetYTitle("dRW34");
+    p34 ->Draw("colz");
+    ptdRW34->Print("ptdRW34.pdf","pdf");
+    */
     plotter.plotBeforeAfter("before_quarkMiss12", "quarkMiss12", categories);
     plotter.plotBeforeAfter("before_ptMiss12", "ptMiss12", categories);
-    plotter.plotBeforeAfter("before_mMiss12", "mMiss12", categories);
+    //plotter.plotBeforeAfter("before_mMiss12", "mMiss12", categories);
     plotter.plotBeforeAfter("before_etaMiss12", "etaMiss12", categories);
     plotter.plotBeforeAfter("before_yMiss12", "yMiss12", categories);
     plotter.plotBeforeAfter("before_phiMiss12", "phiMiss12", categories);
     
     plotter.plotBeforeAfter("before_quarkMiss34", "quarkMiss34", categories);
     plotter.plotBeforeAfter("before_ptMiss34", "ptMiss34", categories);
-    plotter.plotBeforeAfter("before_mMiss34", "mMiss34", categories);
+    //plotter.plotBeforeAfter("before_mMiss34", "mMiss34", categories);
     plotter.plotBeforeAfter("before_etaMiss34", "etaMiss34", categories);
     plotter.plotBeforeAfter("before_yMiss34", "yMiss34", categories);
     plotter.plotBeforeAfter("before_phiMiss34", "phiMiss34", categories);
@@ -679,7 +744,7 @@ int main( int argc, char** argv )
     plotter.plotBeforeAfter("before_deltaR2", "deltaR2",  categories);
     plotter.plotBeforeAfter("before_deltaR3", "deltaR3",  categories);
     plotter.plotBeforeAfter("before_deltaR4", "deltaR4",  categories);
-    */
+    
     plotter.plotBeforeAfter("before_numNonDup", "numNonDup",  categories);
     plotter.plotBeforeAfter("before_ptMinAll", "ptMinAll",  categories);
     plotter.plotBeforeAfter("before_etaMaxAll", "etaMaxAll",  categories);
@@ -709,10 +774,16 @@ int main( int argc, char** argv )
     plotter.plotBeforeAfter("before_dR3rdJet34", "dR3rdJet34",  categories);
     plotter.plotBeforeAfter("before_dRMatched3rdJet34", "dRMatched3rdJet34",  categories);
     
+    plotter.plotBeforeAfter("before_dRW12", "dRW12", categories);
+    plotter.plotBeforeAfter("before_dRW34", "dRW34", categories);
+    
+    plotter.plotBeforeAfter("before_numClosestPass12", "numClosestPass12", categories);
+    plotter.plotBeforeAfter("before_numClosestPass34", "numClosestPass34", categories);
+    
     std::cout<<"--------------------Cut flow for all backgrounds:-----------------------------------------------------------"<<std::endl;
     printCutFlow(plotter, categories, "All backgrounds");
     std::cout<<"------------------------------------------------------------------------------------------------------------"<<std::endl;
-
+    printTtbarStats(plotter);
     return 0;
 }
 void setupFileList(std::vector<TFile*>& files)
@@ -810,155 +881,161 @@ void bookPlots(LittlePlotter& plotter)
     plotter.book(new TH1F("yB", ";y_{B};Number of Events", 50, -2.5, 2.5));
     plotter.book(new TH1F("PhiB", ";#Phi_{B};Number of Events", 50, 0., 2*M_PI));
     
-    plotter.book(new TH1F("before_quarkMiss12", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("before_quarkMiss12", ";pid (abs);Number of Events", 60, 0., 6.));
     //plotter.book(new TH1F("before_mMiss12", ";m_{Miss12} [GeV];Number of Events", 50, 0., 5.));
     plotter.book(new TH1F("before_ptMiss12", ";X p_{Miss12} [GeV];Number of Events", 50, 0., 250.)); //events exist up to 350
     plotter.book(new TH1F("before_etaMiss12", ";eta_{Miss12};Number of Events", 50,-5., 5.));
     plotter.book(new TH1F("before_yMiss12", ";y_{Miss12};Number of Events", 50, -2.5, 2.5));
     plotter.book(new TH1F("before_phiMiss12", ";#Phi_{Miss12};Number of Events", 50, 0., 2*M_PI));
     
-    plotter.book(new TH1F("before_quarkMiss34", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("before_quarkMiss34", ";pid (abs);Number of Events", 60, 0, 6));
     //plotter.book(new TH1F("before_mMiss34", ";m_{Miss34} [GeV];Number of Events", 50, 0., 5.));
     plotter.book(new TH1F("before_ptMiss34", ";X p_{Miss34} [GeV];Number of Events", 50, 0., 250.));
     plotter.book(new TH1F("before_etaMiss34", ";eta_{Miss34};Number of Events", 50,-5., 5.));
     plotter.book(new TH1F("before_yMiss34", ";y_{Miss34};Number of Events", 50, -2.5, 2.5));
     plotter.book(new TH1F("before_phiMiss34", ";#Phi_{Miss34};Number of Events", 50, 0., 2*M_PI));
     
-    plotter.book(new TH1F("before_charge12", ";e_{12};Number of Events", 50, -2, 2));
-    plotter.book(new TH1F("before_charge34", ";e_{34};Number of Events", 50, -2, 2));
+    plotter.book(new TH1F("before_charge12", ";e_{12};Number of Events", 50, -2., 2.));
+    plotter.book(new TH1F("before_charge34", ";e_{34};Number of Events", 50, -2., 2.));
     
-    plotter.book(new TH1F("before_bLeadStatus12", ";code_{12};Number of Events", 10, -0.5, 2.5));
-    plotter.book(new TH1F("before_bLeadStatus34", ";code_{34};Number of Events", 10, -0.5, 2.5));
-    plotter.book(new TH1F("before_bothBleading", ";code;Number of Events", 10, -0.5, 2.5));
-    plotter.book(new TH1F("before_dijetsHaveTwoBquarks", ";code;Number of Events", 10, -0.5, 2.5));
+    plotter.book(new TH1F("before_bLeadStatus12", ";code_{12};Number of Events", 14, -0.5, 3.));
+    plotter.book(new TH1F("before_bLeadStatus34", ";code_{34};Number of Events", 14, -0.5, 3.));
+    plotter.book(new TH1F("before_bothBleading", ";code;Number of Events", 14, -0.5, 3.));
+    plotter.book(new TH1F("before_dijetsHaveTwoBquarks", ";code;Number of Events", 14, -0.5, 3.));
     
-    plotter.book(new TH1F("before_dR_sublead12", ";dR;Number of Events", 50, 0, 5));
-    plotter.book(new TH1F("before_dR_sublead34", ";dR;Number of Events", 50, 0, 5));
-    plotter.book(new TH1F("before_dR_lead12", ";dR;Number of Events", 50, 0, 5));
-    plotter.book(new TH1F("before_dR_lead34", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("before_dR_sublead12", ";dR;Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("before_dR_sublead34", ";dR;Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("before_dR_lead12", ";dR;Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("before_dR_lead34", ";dR;Number of Events", 50, 0., 5.));
     
-    plotter.book(new TH1F("before_dR_Wquarks12", ";dR;Number of Events", 50, 0, 5));
-    plotter.book(new TH1F("before_dR_Wquarks34", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("before_dR_Wquarks12", ";dR;Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("before_dR_Wquarks34", ";dR;Number of Events", 50, 0., 5.));
     
-    plotter.book(new TH1F("before_numJetsMatched", ";number;Number of Events", 30, -0.5, 4.5));
-    plotter.book(new TH1F("before_numQuarks", ";number;Number of Events", 30, -0.5, 6.5));
-    plotter.book(new TH1F("before_quarkMatchStatus", ";code;Number of Events", 50, -7.5, 7.5));
-    plotter.book(new TH1F("before_alignStatus", ";code;Number of Events", 10, -0.5, 2.5));
-    plotter.book(new TH1F("before_multiMatch", ";flag;Number of Events", 10, -0.5, 1.5));
+    plotter.book(new TH1F("before_numJetsMatched", ";number;Number of Events", 30, -1., 5.));
+    plotter.book(new TH1F("before_numQuarks", ";number;Number of Events", 35, 0., 7.));
+    plotter.book(new TH1F("before_quarkMatchStatus", ";code;Number of Events", 50, -6., 4.));
+    plotter.book(new TH1F("before_alignStatus", ";code;Number of Events", 14, -0.5, 3.));
+    plotter.book(new TH1F("before_multiMatch", ";flag;Number of Events", 6, -1., 2.));
     
-    plotter.book(new TH1F("before_quark1", ";pid (abs);Number of Events", 50, 0, 6));
-    plotter.book(new TH1F("before_quark2", ";pid (abs);Number of Events", 50, 0, 6));
-    plotter.book(new TH1F("before_quark3", ";pid (abs);Number of Events", 50, 0, 6));
-    plotter.book(new TH1F("before_quark4", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("before_quark1", ";pid (abs);Number of Events", 60, 0., 6.));
+    plotter.book(new TH1F("before_quark2", ";pid (abs);Number of Events", 60, 0., 6.));
+    plotter.book(new TH1F("before_quark3", ";pid (abs);Number of Events", 60, 0., 6.));
+    plotter.book(new TH1F("before_quark4", ";pid (abs);Number of Events", 60, 0., 6.));
     
-    plotter.book(new TH1F("before_deltaR1", ";dR;Number of Events", 50, 0, 0.3));
-    plotter.book(new TH1F("before_deltaR2", ";dR;Number of Events", 50, 0, 0.3));
-    plotter.book(new TH1F("before_deltaR3", ";dR;Number of Events", 50, 0, 0.3));
-    plotter.book(new TH1F("before_deltaR4", ";dR;Number of Events", 50, 0, 0.3));
+    plotter.book(new TH1F("before_deltaR1", ";dR;Number of Events", 30, 0., 0.3));
+    plotter.book(new TH1F("before_deltaR2", ";dR;Number of Events", 30, 0., 0.3));
+    plotter.book(new TH1F("before_deltaR3", ";dR;Number of Events", 30, 0., 0.3));
+    plotter.book(new TH1F("before_deltaR4", ";dR;Number of Events", 30, 0., 0.3));
     
-    plotter.book(new TH1F("before_numNonDup", ";number;Number of Events", 50, -0.5, 12.5));
+    plotter.book(new TH1F("before_numNonDup", ";number;Number of Events", 32, -1., 15.));
     plotter.book(new TH1F("before_ptMinAll", ";X p [GeV];Number of Events", 50, 0., 500.));
     plotter.book(new TH1F("before_etaMaxAll", ";eta;Number of Events", 50,0., 5.));
-    plotter.book(new TH1F("before_numClosestFound", ";number;Number of Events", 50, -0.5, 2.5));
-    plotter.book(new TH1F("before_multiMatch3rd", ";flag;Number of Events", 10, -0.5, 1.5));
-    plotter.book(new TH1F("before_num3rdJetsMatched", ";flag;Number of Events", 10, -0.5, 2.5));
-    plotter.book(new TH1F("before_sameClosest", ";flag;Number of Events", 10, -0.5, 1.5));
-    plotter.book(new TH1F("before_3rdMatchStatus", ";code;Number of Events", 50, -3.5, 3.5));
+    plotter.book(new TH1F("before_numClosestFound", ";number;Number of Events", 54, -10.5, 3.));
+    plotter.book(new TH1F("before_multiMatch3rd", ";flag;Number of Events", 6, -1., 2.));
+    plotter.book(new TH1F("before_num3rdJetsMatched", ";flag;Number of Events", 14, -0.5, 3.));
+    plotter.book(new TH1F("before_sameClosest", ";flag;Number of Events", 10, -2., 3.));
+    plotter.book(new TH1F("before_3rdMatchStatus", ";code;Number of Events", 14, -3., 4.));
     
-    plotter.book(new TH1F("before_quarkMatched3rdJet12", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("before_quarkMatched3rdJet12", ";pid (abs);Number of Events", 60, 0., 6.));
     plotter.book(new TH1F("before_pt3rdJet12", ";X p_{3rdJet12} [GeV];Number of Events", 50, 0., 250.));
-    plotter.book(new TH1F("before_m3rdJet12", ";m_{3rdJet12} [GeV];Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("before_m3rdJet12", ";m_{3rdJet12} [GeV];Number of Events", 50, 0., 50.));
     plotter.book(new TH1F("before_eta3rdJet12", ";eta_{3rdJet12};Number of Events", 50,-5., 5.));
     plotter.book(new TH1F("before_y3rdJet12", ";y_{3rdJet12};Number of Events", 50, -2.5, 2.5));
     plotter.book(new TH1F("before_phi3rdJet12", ";#Phi_{3rdJet12};Number of Events", 50, 0., 2*M_PI));
     
-    plotter.book(new TH1F("before_quarkMatched3rdJet34", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("before_quarkMatched3rdJet34", ";pid (abs);Number of Events", 60, 0., 6.));
     plotter.book(new TH1F("before_pt3rdJet34", ";X p_{3rdJet34} [GeV];Number of Events", 50, 0., 250.));
-    plotter.book(new TH1F("before_m3rdJet34", ";m_{3rdJet34} [GeV];Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("before_m3rdJet34", ";m_{3rdJet34} [GeV];Number of Events", 50, 0., 50.));
     plotter.book(new TH1F("before_eta3rdJet34", ";eta_{3rdJet34};Number of Events", 50,-5., 5.));
     plotter.book(new TH1F("before_y3rdJet34", ";y_{3rdJet34};Number of Events", 50, -2.5, 2.5));
     plotter.book(new TH1F("before_phi3rdJet34", ";#Phi_{3rdJet34};Number of Events", 50, 0., 2*M_PI));
     
-    plotter.book(new TH1F("before_dR3rdJet12", ";dR;Number of Events", 50, 0, 5));
-    plotter.book(new TH1F("before_dRMatched3rdJet12", ";dR;Number of Events", 50, 0, 0.3));
+    plotter.book(new TH1F("before_dR3rdJet12", ";dR;Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("before_dRMatched3rdJet12", ";dR;Number of Events", 50, 0., 0.3));
     
-    plotter.book(new TH1F("before_dR3rdJet34", ";dR;Number of Events", 50, 0, 5));
-    plotter.book(new TH1F("before_dRMatched3rdJet34", ";dR;Number of Events", 50, 0, 0.3));
+    plotter.book(new TH1F("before_dR3rdJet34", ";dR;Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("before_dRMatched3rdJet34", ";dR;Number of Events", 50, 0., 0.3));
+    
+    plotter.book(new TH1F("before_numClosestPass12", ";number;Number of Events", 14, -1., 6.));
+    plotter.book(new TH1F("before_numClosestPass34", ";number;Number of Events", 14, -1., 6.));
 
-    plotter.book(new TH1F("quarkMiss12", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("quarkMiss12", ";pid (abs);Number of Events", 60., 0., 6.));
     //plotter.book(new TH1F("mMiss12", ";m_{Miss12} [GeV];Number of Events", 50, 0., 5.));
     plotter.book(new TH1F("ptMiss12", ";X p_{Miss12} [GeV];Number of Events", 50, 0., 250.));
     plotter.book(new TH1F("etaMiss12", ";eta_{Miss12};Number of Events", 50,-5., 5.));
     plotter.book(new TH1F("yMiss12", ";y_{Miss12};Number of Events", 50, -2.5, 2.5));
     plotter.book(new TH1F("phiMiss12", ";#Phi_{Miss12};Number of Events", 50, 0., 2*M_PI));
     
-    plotter.book(new TH1F("quarkMiss34", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("quarkMiss34", ";pid (abs);Number of Events", 60., 0., 6.));
     //plotter.book(new TH1F("mMiss34", ";m_{Miss34} [GeV];Number of Events", 50, 0., 5.));
     plotter.book(new TH1F("ptMiss34", ";X p_{Miss34} [GeV];Number of Events", 50, 0., 250.));
     plotter.book(new TH1F("etaMiss34", ";eta_{Miss34};Number of Events", 50,-5., 5.));
     plotter.book(new TH1F("yMiss34", ";y_{Miss34};Number of Events", 50, -2.5, 2.5));
     plotter.book(new TH1F("phiMiss34", ";#Phi_{Miss34};Number of Events", 50, 0., 2*M_PI));
     
-    plotter.book(new TH1F("charge12", ";e_{12};Number of Events", 50, -2, 2));
-    plotter.book(new TH1F("charge34", ";e_{34};Number of Events", 50, -2, 2));
+    plotter.book(new TH1F("charge12", ";e_{12};Number of Events", 50., -2., 2.));
+    plotter.book(new TH1F("charge34", ";e_{34};Number of Events", 50., -2., 2.));
     
-    plotter.book(new TH1F("bLeadStatus12", ";code_{12};Number of Events", 10, -0.5, 2.5));
-    plotter.book(new TH1F("bLeadStatus34", ";code_{34};Number of Events", 10, -0.5, 2.5));
-    plotter.book(new TH1F("bothBleading", ";code;Number of Events", 10, -0.5, 2.5));
-    plotter.book(new TH1F("dijetsHaveTwoBquarks", ";code;Number of Events", 10, -0.5, 2.5));
+    plotter.book(new TH1F("bLeadStatus12", ";code_{12};Number of Events", 14, -0.5, 3.));
+    plotter.book(new TH1F("bLeadStatus34", ";code_{34};Number of Events", 14, -0.5, 3.));
+    plotter.book(new TH1F("bothBleading", ";code;Number of Events", 14, -0.5, 3.));
+    plotter.book(new TH1F("dijetsHaveTwoBquarks", ";code;Number of Events", 14, -0.5, 3.));
     
-    plotter.book(new TH1F("dR_sublead12", ";dR;Number of Events", 50, 0, 5));
-    plotter.book(new TH1F("dR_sublead34", ";dR;Number of Events", 50, 0, 5));
-    plotter.book(new TH1F("dR_lead12", ";dR;Number of Events", 50, 0, 5));
-    plotter.book(new TH1F("dR_lead34", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("dR_sublead12", ";dR;Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("dR_sublead34", ";dR;Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("dR_lead12", ";dR;Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("dR_lead34", ";dR;Number of Events", 50, 0., 5.));
     
-    plotter.book(new TH1F("dR_Wquarks12", ";dR;Number of Events", 50, 0, 5));
-    plotter.book(new TH1F("dR_Wquarks34", ";dR;Number of Events", 50, 0, 5));
+    plotter.book(new TH1F("dR_Wquarks12", ";dR;Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("dR_Wquarks34", ";dR;Number of Events", 50, 0., 5.));
     
-    plotter.book(new TH1F("numJetsMatched", ";number;Number of Events", 30, -0.5, 4.5));
-    plotter.book(new TH1F("numQuarks", ";number;Number of Events", 30, -0.5, 6.5));
-    plotter.book(new TH1F("quarkMatchStatus", ";code;Number of Events", 50, -7.5, 7.5));
-    plotter.book(new TH1F("alignStatus", ";code;Number of Events", 10, -0.5, 2.5));
-    plotter.book(new TH1F("multiMatch", ";flag;Number of Events", 10, -0.5, 1.5));
+    plotter.book(new TH1F("numJetsMatched", ";number;Number of Events", 30, -1., 5.));
+    plotter.book(new TH1F("numQuarks", ";number;Number of Events", 35, 0., 7.));
+    plotter.book(new TH1F("quarkMatchStatus", ";code;Number of Events", 50, -6., 4.));
+    plotter.book(new TH1F("alignStatus", ";code;Number of Events", 14, -0.5, 3.));
+    plotter.book(new TH1F("multiMatch", ";flag;Number of Events", 6, -1., 2.));
     
-    plotter.book(new TH1F("quark1", ";pid (abs);Number of Events", 50, 0, 6));
-    plotter.book(new TH1F("quark2", ";pid (abs);Number of Events", 50, 0, 6));
-    plotter.book(new TH1F("quark3", ";pid (abs);Number of Events", 50, 0, 6));
-    plotter.book(new TH1F("quark4", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("quark1", ";pid (abs);Number of Events", 60, 0., 6.));
+    plotter.book(new TH1F("quark2", ";pid (abs);Number of Events", 60, 0., 6.));
+    plotter.book(new TH1F("quark3", ";pid (abs);Number of Events", 60, 0., 6.));
+    plotter.book(new TH1F("quark4", ";pid (abs);Number of Events", 60, 0., 6.));
 
-    plotter.book(new TH1F("deltaR1", ";dR;Number of Events", 50, 0, 0.3));
-    plotter.book(new TH1F("deltaR2", ";dR;Number of Events", 50, 0, 0.3));
-    plotter.book(new TH1F("deltaR3", ";dR;Number of Events", 50, 0, 0.3));
-    plotter.book(new TH1F("deltaR4", ";dR;Number of Events", 50, 0, 0.3));
+    plotter.book(new TH1F("deltaR1", ";dR;Number of Events", 30, 0., 0.3));
+    plotter.book(new TH1F("deltaR2", ";dR;Number of Events", 30, 0., 0.3));
+    plotter.book(new TH1F("deltaR3", ";dR;Number of Events", 30, 0., 0.3));
+    plotter.book(new TH1F("deltaR4", ";dR;Number of Events", 30, 0., 0.3));
     
-    plotter.book(new TH1F("numNonDup", ";number;Number of Events", 50, -0.5, 12.5));
+    plotter.book(new TH1F("numNonDup", ";number;Number of Events", 32, -1., 15.));
     plotter.book(new TH1F("ptMinAll", ";X p [GeV];Number of Events", 50, 0., 500.));
     plotter.book(new TH1F("etaMaxAll", ";eta;Number of Events", 50,0., 5.));
-    plotter.book(new TH1F("numClosestFound", ";number;Number of Events", 50, -0.5, 2.5));
-    plotter.book(new TH1F("multiMatch3rd", ";flag;Number of Events", 10, -0.5, 1.5));
-    plotter.book(new TH1F("num3rdJetsMatched", ";flag;Number of Events", 10, -0.5, 2.5));
-    plotter.book(new TH1F("sameClosest", ";flag;Number of Events", 10, -0.5, 1.5));
-    plotter.book(new TH1F("3rdMatchStatus", ";code;Number of Events", 50, -3.5, 3.5));
+    plotter.book(new TH1F("numClosestFound", ";number;Number of Events", 54, -10.5, 3.));
+    plotter.book(new TH1F("multiMatch3rd", ";flag;Number of Events", 6, -1., 2.));
+    plotter.book(new TH1F("num3rdJetsMatched", ";flag;Number of Events", 14, -0.5, 3.));
+    plotter.book(new TH1F("sameClosest", ";flag;Number of Events", 10, -2., 3.));
+    plotter.book(new TH1F("3rdMatchStatus", ";code;Number of Events", 14, -3., 4.));
     
-    plotter.book(new TH1F("quarkMatched3rdJet12", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("quarkMatched3rdJet12", ";pid (abs);Number of Events", 60, 0., 6.));
     plotter.book(new TH1F("pt3rdJet12", ";X p_{3rdJet12} [GeV];Number of Events", 50, 0., 250.));
-    plotter.book(new TH1F("m3rdJet12", ";m_{3rdJet12} [GeV];Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("m3rdJet12", ";m_{3rdJet12} [GeV];Number of Events", 50, 0., 50.));
     plotter.book(new TH1F("eta3rdJet12", ";eta_{3rdJet12};Number of Events", 50,-5., 5.));
     plotter.book(new TH1F("y3rdJet12", ";y_{3rdJet12};Number of Events", 50, -2.5, 2.5));
     plotter.book(new TH1F("phi3rdJet12", ";#Phi_{3rdJet12};Number of Events", 50, 0., 2*M_PI));
     
-    plotter.book(new TH1F("quarkMatched3rdJet34", ";pid (abs);Number of Events", 50, 0, 6));
+    plotter.book(new TH1F("quarkMatched3rdJet34", ";pid (abs);Number of Events", 60, 0., 6.));
     plotter.book(new TH1F("pt3rdJet34", ";X p_{3rdJet34} [GeV];Number of Events", 50, 0., 250.));
-    plotter.book(new TH1F("m3rdJet34", ";m_{3rdJet34} [GeV];Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("m3rdJet34", ";m_{3rdJet34} [GeV];Number of Events", 50, 0., 50.));
     plotter.book(new TH1F("eta3rdJet34", ";eta_{3rdJet34};Number of Events", 50,-5., 5.));
     plotter.book(new TH1F("y3rdJet34", ";y_{3rdJet34};Number of Events", 50, -2.5, 2.5));
     plotter.book(new TH1F("phi3rdJet34", ";#Phi_{3rdJet34};Number of Events", 50, 0., 2*M_PI));
     
-    plotter.book(new TH1F("dR3rdJet12", ";dR;Number of Events", 50, 0, 5));
-    plotter.book(new TH1F("dRMatched3rdJet12", ";dR;Number of Events", 50, 0, 0.3));
+    plotter.book(new TH1F("dR3rdJet12", ";dR;Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("dRMatched3rdJet12", ";dR;Number of Events", 50, 0., 0.3));
     
-    plotter.book(new TH1F("dR3rdJet34", ";dR;Number of Events", 50, 0, 5));
-    plotter.book(new TH1F("dRMatched3rdJet34", ";dR;Number of Events", 50, 0, 0.3));
+    plotter.book(new TH1F("dR3rdJet34", ";dR;Number of Events", 50, 0., 5.));
+    plotter.book(new TH1F("dRMatched3rdJet34", ";dR;Number of Events", 50, 0., 0.3));
+    
+    plotter.book(new TH1F("numClosestPass12", ";number;Number of Events", 14, -1., 6.));
+    plotter.book(new TH1F("numClosestPass34", ";number;Number of Events", 14, -1., 6.));
     
     plotter.book(new TH1F("TopVetoBDT", ";Top Veto BDT Output;Number of Events", 50, -1., 1.));
 
@@ -1033,7 +1110,7 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
     std::cout<<"2 dijets $m_H$ & "<< formatNumberForTable(sig) <<" & "<< formatNumberForTable(back) <<" & "<< formatNumberForTable(sig/back) <<" & "<< formatNumberForTable(sig/sqrt(back));
     std::cout<<"\\\\"<< std::endl;
     //plotName = "BDT";
-    plotName = "topVeto_cosThetaStar";  //I broke this but too lazy to debug so i just reused the previous plot
+    plotName = "topVeto_cosThetaStar";
     back = 0.;
     for(std::vector<TString>::iterator cat = categories.begin(); cat != categories.end(); ++cat)
     {
@@ -1043,6 +1120,546 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
     std::cout<<"Top Veto & "<< formatNumberForTable(sig) <<" & "<< formatNumberForTable(back) <<" & "<< formatNumberForTable(sig/back) <<" & "<< formatNumberForTable(sig/sqrt(back));
     std::cout<<"\\\\"<< std::endl;
     std::cout<<"\\hline\\end{tabular}\\caption{"<< caption <<"}\\end{center}\\end{table}"<< std::endl;
+}
+
+void printTtbarStats(LittlePlotter& plotter)
+{
+    std::cout << "TTBAR STATS" << std::endl;
+    //Optional: Insert null output code if ttbar not found in categories....
+    TString cat = "ttbar";
+    double incre = 0;
+    double firstBin = 0;
+    double percent = 1; //change to 0.01 for percent
+    double numBins = 0;
+    double subtotal = 0;
+    
+    std::cout << "Before Top Veto:" << std::endl;
+    //Total number of events (weighted) Baseline total for before TopVeto Hists
+    //Due to applying weight this number will flucuate slightly if different hist used
+    TString plotName = "dijets_mH_cosThetaStar";
+    //Optional baseline replacement
+    //plotName = "before_multiMatch";
+    std::cout << "baseline_before: " << plotter.getPlot(plotName, cat)->Integral() << std::endl;
+    //double total_before = percent*plotter.getPlot(plotName, cat)->Integral();
+    double total_before = 1;
+
+    //Calculating percentages:
+    
+    plotName = "before_numQuarks";
+    std::cout << plotName << std::endl;
+    firstBin = 11;
+    incre = 10;
+    numBins = 3;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << ((i+1)*2) << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    double numQ_6 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*2);
+
+    plotName = "before_numJetsMatched";
+    std::cout << plotName << std::endl;
+    firstBin = 6;
+    incre = 5;
+    numBins = 5;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    
+    plotName = "before_quarkMatchStatus";
+    std::cout << plotName << std::endl;
+    firstBin = 6;
+    incre = 5;
+    numBins = 9;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        subtotal = subtotal + nD_0;
+        if ( i-5 < 0) {
+            std::cout << "" << i-5 << ": " << nD_0/total_before << std::endl;
+        }
+        else {
+            std::cout << " " << i-5 << ": " << nD_0/total_before << std::endl;
+        }
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    double qM_3 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*8);
+
+    plotName = "before_multiMatch";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 2;
+    numBins = 2;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    
+    //Below are stats for quarkMatchStatus = 3 only events:
+    
+    std::cout << "------Applying quarkMatchStatus = 3 cut-------" << std::endl;
+    
+    //double match3baseline = (qM_3*percent);
+    double match3baseline = total_before;
+    plotName = "before_alignStatus";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 3;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/match3baseline << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    double aS_2 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*2);
+    
+    //Below are stats for quarkMatchStatus = 3 AND alignStatus = 2 events:
+    
+    std::cout << "------Applying alignStatus = 2 cut-------" << std::endl;
+    
+    //double align2baseline = (aS_2*percent);
+    double align2baseline = total_before;
+    plotName = "before_dijetsHaveTwoBquarks";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 3;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/align2baseline << std::endl;
+    }
+    
+    plotName = "before_bLeadStatus12";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 3;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/align2baseline << std::endl;
+    }
+    
+    plotName = "before_bLeadStatus34";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 3;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/align2baseline << std::endl;
+    }
+    plotName = "before_bothBleading";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 3;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/align2baseline << std::endl;
+    }
+    
+    //Applying 3rd Jet analysis
+    
+    std::cout << "------3rd Jet Matching-------" << std::endl;
+
+    plotName = "before_numNonDup";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 2;
+    numBins = 8;
+    subtotal = 0;
+    for (int i = 0; i< numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    double nD_8 = plotter.getPlot(plotName, cat)->Integral((firstBin + incre*8),100);
+    std::cout << ">7: " << nD_8/total_before << std::endl;
+    std::cout << "subtotal: " << subtotal+nD_8 << std::endl;
+    
+    plotName = "before_numClosestPass12";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 2;
+    numBins = 6;
+    subtotal = 0;
+    for (int i = 0; i< numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    
+    plotName = "before_numClosestPass34";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 2;
+    numBins = 6;
+    subtotal = 0;
+    for (int i = 0; i< numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    
+    plotName = "before_sameClosest";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 2;
+    numBins = 4;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        subtotal = subtotal + nD_0;
+        if ( i-1 < 0) {
+            std::cout << "" << i-1 << ": " << nD_0/total_before << std::endl;
+        }
+        else {
+            std::cout << " " << i-1 << ": " << nD_0/total_before << std::endl;
+        }
+    }
+    std::cout << "subtotal " << subtotal << std::endl;
+    
+    //alignStatus = 2 cut
+    
+    //ack numClosestFound applied after alignStatus = 2 cut, might want to fix this, and also dunno why ~100 in test missing but wtvr
+    
+    plotName = "before_numClosestFound";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 13;
+    subtotal = 0;
+    for (int i = 0; i< numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        subtotal = subtotal + nD_0;
+        if ( i-10 < 0) {
+            std::cout << "" << i-10 << ": " << nD_0/total_before << std::endl;
+        }
+        else {
+            std::cout << " " << i-10 << ": " << nD_0/total_before << std::endl;
+        }
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    
+    //only for numClosestFound = 2 now
+    
+    plotName = "before_num3rdJetsMatched";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 3;
+    subtotal = 0;
+    for (int i = 0; i< numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/align2baseline << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    
+    plotName = "before_multiMatch3rd";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 2;
+    numBins = 2;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    
+    plotName = "before_3rdMatchStatus";
+    std::cout << plotName << std::endl;
+    firstBin = 1;
+    incre = 2;
+    numBins = 7;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        subtotal = subtotal + nD_0;
+        if ( i-3 < 0) {
+            std::cout << "" << i-3 << ": " << nD_0/total_before << std::endl;
+        }
+        else {
+            std::cout << " " << i-3 << ": " << nD_0/total_before << std::endl;
+        }
+    }
+    std::cout << "------------------------------------------------------------------------" << std::endl;
+    std::cout << "After Top Veto:" << std::endl;
+
+    //Total number of events (weighted) Baseline total for after TopVeto Hists
+    //Due to applying weight this number will flucuate slightly if different hist used
+    plotName = "topVeto_cosThetaStar";
+    //Optional baseline replacement
+    //plotName = "multiMatch";
+    std::cout << "baseline_after: " << plotter.getPlot(plotName, cat)->Integral() << std::endl;
+    //total_before = percent*plotter.getPlot(plotName, cat)->Integral();
+    
+    //Calculating percentages:
+    
+    plotName = "numQuarks";
+    std::cout << plotName << std::endl;
+    firstBin = 11;
+    incre = 10;
+    numBins = 3;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << ((i+1)*2) << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    numQ_6 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*2);
+    
+    plotName = "numJetsMatched";
+    std::cout << plotName << std::endl;
+    firstBin = 6;
+    incre = 5;
+    numBins = 5;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    
+    plotName = "quarkMatchStatus";
+    std::cout << plotName << std::endl;
+    firstBin = 6;
+    incre = 5;
+    subtotal = 0;
+    for (int i = 0; i < 9; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        subtotal = subtotal + nD_0;
+        if ( i-5 < 0) {
+            std::cout << "" << i-5 << ": " << nD_0/total_before << std::endl;
+        }
+        else {
+            std::cout << " " << i-5 << ": " << nD_0/total_before << std::endl;
+        }
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    qM_3 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*8);
+    
+    plotName = "multiMatch";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 2;
+    numBins = 2;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    
+    //Below are stats for quarkMatchStatus = 3 only events:
+    
+    std::cout << "------Applying quarkMatchStatus = 3 cut-------" << std::endl;
+    
+    //double match3baseline = (qM_3*percent);
+    match3baseline = total_before;
+    plotName = "alignStatus";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 3;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/match3baseline << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    aS_2 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*2);
+    
+    //Below are stats for quarkMatchStatus = 3 AND alignStatus = 2 events:
+    
+    std::cout << "------Applying alignStatus = 2 cut-------" << std::endl;
+    
+    //double align2baseline = (aS_2*percent);
+    align2baseline = total_before;
+    plotName = "dijetsHaveTwoBquarks";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 3;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/align2baseline << std::endl;
+    }
+    
+    plotName = "bLeadStatus12";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 3;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/align2baseline << std::endl;
+    }
+    
+    plotName = "bLeadStatus34";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 3;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/align2baseline << std::endl;
+    }
+    
+    plotName = "bothBleading";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 3;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/align2baseline << std::endl;
+    }
+    
+    //Applying 3rd Jet analysis
+    
+    std::cout << "------3rd Jet Matching-------" << std::endl;
+    
+    plotName = "numNonDup";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 2;
+    numBins = 8;
+    subtotal = 0;
+    for (int i = 0; i< numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    nD_8 = plotter.getPlot(plotName, cat)->Integral((firstBin + incre*8),100);
+    std::cout << ">7: " << nD_8/total_before << std::endl;
+    std::cout << "subtotal: " << subtotal+nD_8 << std::endl;
+    
+    plotName = "numClosestPass12";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 2;
+    numBins = 6;
+    subtotal = 0;
+    for (int i = 0; i< numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    
+    plotName = "numClosestPass34";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 2;
+    numBins = 6;
+    subtotal = 0;
+    for (int i = 0; i< numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    
+    plotName = "sameClosest";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 2;
+    numBins = 4;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        subtotal = subtotal + nD_0;
+        if ( i-1 < 0) {
+            std::cout << "" << i-1 << ": " << nD_0/total_before << std::endl;
+        }
+        else {
+            std::cout << " " << i-1 << ": " << nD_0/total_before << std::endl;
+        }
+    }
+    std::cout << "subtotal " << subtotal << std::endl;
+    
+    //alignStatus = 2 cut
+    
+    //ack numClosestFound applied after alignStatus = 2 cut, might want to fix this, and also dunno why ~100 in test missing but wtvr
+    
+    plotName = "numClosestFound";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 13;
+    subtotal = 0;
+    for (int i = 0; i< numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        subtotal = subtotal + nD_0;
+        if ( i-10 < 0) {
+            std::cout << "" << i-10 << ": " << nD_0/total_before << std::endl;
+        }
+        else {
+            std::cout << " " << i-10 << ": " << nD_0/total_before << std::endl;
+        }
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    
+    //only for numClosestFound = 2 now
+    
+    plotName = "num3rdJetsMatched";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 4;
+    numBins = 3;
+    subtotal = 0;
+    for (int i = 0; i< numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/align2baseline << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    
+    plotName = "multiMatch3rd";
+    std::cout << plotName << std::endl;
+    firstBin = 3;
+    incre = 2;
+    numBins = 2;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        std::cout << " " << i << ": " << nD_0/total_before << std::endl;
+        subtotal = subtotal + nD_0;
+    }
+    std::cout << "subtotal: " << subtotal << std::endl;
+    
+    plotName = "3rdMatchStatus";
+    std::cout << plotName << std::endl;
+    firstBin = 1;
+    incre = 2;
+    numBins = 7;
+    subtotal = 0;
+    for (int i = 0; i < numBins; i++) {
+        double nD_0 = plotter.getPlot(plotName, cat)->GetBinContent(firstBin + incre*i);
+        subtotal = subtotal + nD_0;
+        if ( i-3 < 0) {
+            std::cout << "" << i-3 << ": " << nD_0/total_before << std::endl;
+        }
+        else {
+            std::cout << " " << i-3 << ": " << nD_0/total_before << std::endl;
+        }
+    }
 }
 
 std::string formatNumberForTable(float num)

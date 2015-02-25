@@ -31,6 +31,12 @@ namespace Rivet {
 				//setNeedsCrossSection();
 			}
         //int nEventsAccepted = 0;
+        
+        struct quark_with_dR {
+            double quark;
+            double index;
+            double dR;
+        };
 
 		public:
 
@@ -164,7 +170,7 @@ namespace Rivet {
 					fillReconstructionEfficiency("ca12", "Cambridge-Aachen 1.0 reconstruction efficiency", higgses[1], bquarks[2], bquarks[3], ca12, weight);
 				}*/
 				bookAndFill1D("CutFlow", "Yields vs Selection Step", 0, "Selection Step", 5, -0.5, 4.5, weight);
-				const Jets &akt4 = applyProjection<JetAlg>(event, "AntiKt4").jetsByPt(40*GeV);
+				const Jets &akt4 = applyProjection<JetAlg>(event, "AntiKt4").jetsByPt(20*GeV); //Lowered from 40 for ttbar veto tests
 				std::vector<TagJet> bjets;
 				bjets.reserve(4);
 				foreach(const Jet &j, akt4) {
@@ -321,14 +327,14 @@ namespace Rivet {
                         <<", phi = "<< tDaughters[w].phi() << std::endl;
                     }
                     */
-                    matchJetToPar(bjets, tDaughters, wDaughters);
+                    bJetMatchPar(bjets, tDaughters, wDaughters);
                     
 					fillKinematics("dijet", "Dijet", dijet1, btaggedWeight);
 					fillKinematics("dijet", "Dijet", dijet2, btaggedWeight);
 					for (unsigned int i=0; i<4; ++i) {
 						fillKinematics("jet", "Jet", bjets[i].momentum(), btaggedWeight);
 					}
-					fillXttVariables(akt4,"jet", "Jet", dijet1, bjets[0], bjets[1], dijet2, bjets[2], bjets[3], btaggedWeight); 
+					fillXttVariables(akt4,"jet", "Jet", dijet1, bjets[0], bjets[1], dijet2, bjets[2], bjets[3], btaggedWeight, tDaughters);
 					fillMelaAngles(event, "jet", "Jet", dijet1, bjets[0], bjets[1], dijet2, bjets[2], bjets[3], btaggedWeight);
 					//dijetSelection only satisfied if ≥2 jets are found. Use weight, since x=2 represents 2 dijets w/o b-tagging req.
 					bookAndFill1D("CutFlow", "Yields vs Selection Step", 2, "Selection Step", 5, -0.5, 4.5, weight);
@@ -469,7 +475,7 @@ namespace Rivet {
                 _tree->Branch("etaB", &_etaB, "etaB/D");
                 _tree->Branch("yB", &_yB, "yB/D");
                 _tree->Branch("phiB", &_phiB, "phiB/D");
-                
+                //Jet Matching related
                 _tree->Branch("quarkMiss12", &_quarkMiss12, "quarkMiss12/D");
                 _tree->Branch("ptMiss12", &_ptMiss12, "ptMiss12/D");
                 _tree->Branch("mMiss12", &_mMiss12, "mMiss12/D");
@@ -501,8 +507,8 @@ namespace Rivet {
                 _tree->Branch("dR_Wquarks34", &_dR_Wquarks34, "dR_Wquarks34/D");
                 
                 _tree->Branch("numJetsMatched", &_numJetsMatched, "numJetsMatched/D");
-                _tree->Branch("numHadrons", &_numHadrons, "numHadrons/D");
-                _tree->Branch("hadronMatchStatus", &_hadronMatchStatus, "hadronMatchStatus/D");
+                _tree->Branch("numQuarks", &_numQuarks, "numQuarks/D");
+                _tree->Branch("quarkMatchStatus", &_quarkMatchStatus, "quarkMatchStatus/D");
                 _tree->Branch("alignStatus", &_alignStatus, "alignStatus/D");
                 _tree->Branch("multiMatch", &_multiMatch, "multiMatch/D");
                 
@@ -515,7 +521,37 @@ namespace Rivet {
                 _tree->Branch("deltaR2", &_deltaR2, "deltaR2/D");
                 _tree->Branch("deltaR3", &_deltaR3, "deltaR3/D");
                 _tree->Branch("deltaR4", &_deltaR4, "deltaR4/D");
-
+                //3rd Jet related
+                _tree->Branch("numNonDup", &_numNonDup, "numNonDup/D");
+                _tree->Branch("ptMinAll", &_ptMinAll, "ptMinAll/D");
+                _tree->Branch("etaMaxAll", &_etaMaxAll, "etaMaxAll/D");
+                _tree->Branch("numClosestFound", &_numClosestFound, "numClosestFound/D");
+                _tree->Branch("multiMatch3rd", &_multiMatch3rd, "multiMatch3rd/D");
+                _tree->Branch("num3rdJetsMatched", &_num3rdJetsMatched, "num3rdJetsMatched/D");
+                _tree->Branch("sameClosest", &_sameClosest, "sameClosest/D");
+                _tree->Branch("3rdMatchStatus", &_3rdMatchStatus, "3rdMatchStatus/D");
+                
+                _tree->Branch("quarkMatched3rdJet12", &_quarkMatched3rdJet12, "quarkMatched3rdJet12/D");
+                _tree->Branch("pt3rdJet12", &_pt3rdJet12, "pt3rdJet12/D");
+                _tree->Branch("m3rdJet12", &_m3rdJet12, "m3rdJet12/D");
+                _tree->Branch("eta3rdJet12", &_eta3rdJet12, "eta3rdJet12/D");
+                _tree->Branch("y3rdJet12", &_y3rdJet12, "y3rdJet12/D");
+                _tree->Branch("phi3rdJet12", &_phi3rdJet12, "phi3rdJet12/D");
+                
+                _tree->Branch("quarkMatched3rdJet34", &_quarkMatched3rdJet34, "quarkMatched3rdJet34/D");
+                _tree->Branch("pt3rdJet34", &_pt3rdJet34, "pt3rdJet34/D");
+                _tree->Branch("m3rdJet34", &_m3rdJet34, "m3rdJet34/D");
+                _tree->Branch("eta3rdJet34", &_eta3rdJet34, "eta3rdJet34/D");
+                _tree->Branch("y3rdJet34", &_y3rdJet34, "y3rdJet34/D");
+                _tree->Branch("phi3rdJet34", &_phi3rdJet34, "phi3rdJet34/D");
+                
+                _tree->Branch("dR3rdJet12", &_dR3rdJet12, "dR3rdJet12/D");
+                _tree->Branch("dR3rdJet34", &_dR3rdJet34, "dR3rdJet34/D");
+                _tree->Branch("dRMatched3rdJet12", &_dRMatched3rdJet12, "dRMatched3rdJet12/D");
+                _tree->Branch("dRMatched3rdJet34", &_dRMatched3rdJet34, "dRMatched3rdJet34/D");
+                
+                _tree->Branch("numClosestPass12", &_numClosestPass12, "numClosestPass12/D");
+                _tree->Branch("numClosestPass34", &_numClosestPass34, "numClosestPass34/D");
 
 			}
 			void fillMelaAngles(const Event& event, std::string label, std::string title, const FourMomentum &H1, const TagJet &b11, 
@@ -669,126 +705,57 @@ namespace Rivet {
         
             //Matches particles found from tracing decays to identified jets. Currently optimised for ttbar. Sorry about the magic numbers.
             //Also does diagnostics for 6 hardon 4 jets matched events. Wanted to move it to a seperate function, but using shared variables for now.
-            void matchJetToPar(std::vector<TagJet> &bjets, ParticleVector &tDaughters, ParticleVector &wDaughters)
+            void bJetMatchPar(std::vector<TagJet> &bjets, ParticleVector &tDaughters, ParticleVector &wDaughters)
             {
                 
                 std::map<int, quark_with_dR> quark;
-                quark_with_dR nullQuark;
-                nullQuark.quark = -10;
-                nullQuark.index = -1;
-                nullQuark.dR = -10;
-                std::vector<int> barcodes;
-                int barCount = 0;
-                _multiMatch = 0;
+                double multiMatch = 0;
                 double numJetsMatched = 0;
-                try {
-                for (int i=0; i<4; ++i) {
-                    std::map<int, double> dR;
-                    quark_with_dR matchingQuark;
-                    int minkey = -1;
-                    for (int j=0; j<tDaughters.size(); ++j) {
-                        //std::cout << "dR for jet no. " << i << " and tDaughter no. " << j << " = " << deltaR(bjets[i], tDaughters[j]) << std::endl;
-                        double dR_temp = deltaR(bjets[i], tDaughters[j]);
-                        if (dR_temp < 0.3) {
-                            //std::cout << "dR for jet no. " << i << " and tDaughter no. " << j << " = " << deltaR(bjets[i], tDaughters[j]) << std::endl;
-                            dR[j] = (dR_temp);
-                            if (minkey == -1) {
-                                minkey = j;
-                            } else if (dR_temp < dR[minkey]){
-                                //std::cout << "Found a smaller dR!" << std::endl;
-                                minkey = j;
-                            }
-                        }
-                        
-                    }
-                    /*if (dR.size() == 0) {
-                        std::cout << "No match for jet no. " << i << std::endl;
-                    }
-                    if (dR.size() == 1) {
-                        //std::cout << "Perfect!" << std::endl;
-                    }
-                    if (dR.size() >= 1) {
-                        std::cout << "Matched!" << std::endl;
-                    }*/
-                    if (dR.size() > 1) {
-                        //std::cout << "oh noes multiple matches!" << std::endl;
-                        _multiMatch = 1;
-                    }
-                    if (minkey == -1) {
-                        matchingQuark = nullQuark;
-                        quark[i+1] = matchingQuark;
-                        continue;
-                    }
-                    matchingQuark.quark = tDaughters[minkey].pdgId();
-                    for (std::vector<int>::iterator it = barcodes.begin() ; it != barcodes.end(); ++it) { //If same particle used to match more than 1 jet, crash!
-                        //std::cout << barCount << " " << *it << std::endl;
-                        if (tDaughters[minkey].genParticle()->barcode() == *it) {
-                            //std::cout << "This particle has been used!" << std::endl;
-                            throw 30;
-                        }
-                        barCount++;
-                    }
-                    barcodes.push_back(tDaughters[minkey].genParticle()->barcode());
-                    matchingQuark.dR = dR[minkey];
-                    matchingQuark.index = minkey;
-                    //std::cout << "dR for jet no. " << i << " and tDaughter no. " << minkey << " = " << matchingQuark.dR << ", flavour = " << matchingQuark.quark <<std::endl;
-                    //std::cout << tDaughters[minkey].genParticle()->barcode() << std::endl;
-                    quark[i+1] = matchingQuark;
-                    numJetsMatched++;
-                }
-                }
-                catch (int e) {
-                    if (e == 30) {
-                        //std::cout << "Invalidating event: set to -5 jets matched" << std::endl;
-                        numJetsMatched = -5;
-                        quark.clear();
-                        for (int i=0; i<4; ++i) {
-                            quark[i+1] = nullQuark;
-                        }
-                    }
-                    else {
-                        std::cout << "Something went wrong" << std::endl;
-                        throw e;
-                    }
-                }
+                int numToMatch = 4;
+                numJetsMatched = matchJetToPar(numToMatch, multiMatch, quark, bjets, tDaughters);
+                _multiMatch = multiMatch;
+ 
                 //Determining Match status code based on number of hardrons found vs number of jets found: Ideally get 3 for majority of events, 1 for rare tau decay
                 //2 signifies imperfect matching despite fully hadronic decay: preliminary investigation suggests this is not due to taking first particle in iterator.
                 if (numJetsMatched == -5) {
-                    _hadronMatchStatus = -5;
+                    _quarkMatchStatus = -5;
                 }
                 else if (tDaughters.size() == 6 && numJetsMatched == 4) {
-                    _hadronMatchStatus = 3;
+                    _quarkMatchStatus = 3;
                 }
                 else if (tDaughters.size() == 6 && numJetsMatched < 4) {
                     if (tDaughters.size() == 6 && numJetsMatched == 0) {
-                        _hadronMatchStatus = -1;
+                        _quarkMatchStatus = -1;
                     }
                     else {
-                        _hadronMatchStatus = 2;
+                        _quarkMatchStatus = 2;
                     }
                 }
                 else if (tDaughters.size() == 4 && numJetsMatched == 4) {
-                    _hadronMatchStatus = -2;
+                    _quarkMatchStatus = -2;
                 }
                 else if (tDaughters.size() == 4 && numJetsMatched < 4) {
                     if (tDaughters.size() == 4 && numJetsMatched == 0) {
-                        _hadronMatchStatus = -3;
+                        _quarkMatchStatus = -3;
                     }
                     else {
-                       _hadronMatchStatus = 1;
+                       _quarkMatchStatus = 1;
                     }
                 }
                 else if (tDaughters.size() == 2 && numJetsMatched <= 2) {
                     if (tDaughters.size() == 2 && numJetsMatched == 0) {
-                        _hadronMatchStatus = -4;
+                        _quarkMatchStatus = -4;
                     }
                     else {
-                        _hadronMatchStatus = 0;
+                        _quarkMatchStatus = 0;
                     }
                 }
                 else {
-                    _hadronMatchStatus = -6;
+                    _quarkMatchStatus = -6;
                 }
+                //thirdIndex and MatchStatus will be passed to fillXttVariables, hence resetting here
+                thirdIndex_A = -1;
+                thirdIndex_B = -1;
                 //If fully hadronic and perfect match, perform diagnosis
                 if (tDaughters.size() == 6 && numJetsMatched == 4) {
                     //Determine dijet charge from associated particles
@@ -847,8 +814,6 @@ namespace Rivet {
                     bool from_antitop_34 = (quark[3].index > 2 && quark[4].index > 2);
                     if ((from_top_12 && from_antitop_34) || (from_top_34 && from_antitop_12)) { //If each dijet only has 1 contributing top, find missing particle
                         _alignStatus = 2;
-                        double thirdIndex_A = -1;
-                        double thirdIndex_B = -1;
                         if (from_top_12) {
                             for (double i=0; i < 3; i++) {
                                 if (quark[1].index == i) continue;
@@ -1017,7 +982,7 @@ namespace Rivet {
                     _mMiss34 = -99;
                 }
                 
-                _numHadrons = tDaughters.size();
+                _numQuarks = tDaughters.size();
                 _numJetsMatched = numJetsMatched;
                 
                 //quark1 = fabs(quark[1].quark);
@@ -1034,7 +999,370 @@ namespace Rivet {
                 _deltaR4 = quark[4].dR;
             }
 
-			/// Fill histograms for the 5 unique angles in H->bb [Phys. Rev. D 86 095031 (2012)]
+            double matchJetToPar(int numToMatch, double &multiMatch, std::map<int, quark_with_dR> &quark, std::vector<TagJet> &bjets, ParticleVector &tDaughters)
+            {
+                double numJetsMatched = 0;
+                std::vector<int> barcodes;
+                int barCount = 0;
+                quark_with_dR nullQuark;
+                nullQuark.quark = -10;
+                nullQuark.index = -1;
+                nullQuark.dR = -10;
+                try {
+                    for (int i=0; i<numToMatch; ++i) {
+                        std::map<int, double> dR;
+                        quark_with_dR matchingQuark;
+                        int minkey = -1;
+                        for (int j=0; j<tDaughters.size(); ++j) {
+                            //std::cout << "dR for jet no. " << i << " and tDaughter no. " << j << " = " << deltaR(bjets[i], tDaughters[j]) << std::endl;
+                            double dR_temp = deltaR(bjets[i], tDaughters[j]);
+                            if (dR_temp < 0.3) {
+                                //std::cout << "dR for jet no. " << i << " and tDaughter no. " << j << " = " << deltaR(bjets[i], tDaughters[j]) << std::endl;
+                                dR[j] = (dR_temp);
+                                if (minkey == -1) {
+                                    minkey = j;
+                                } else if (dR_temp < dR[minkey]){
+                                    //std::cout << "Found a smaller dR!" << std::endl;
+                                    minkey = j;
+                                }
+                            }
+                            
+                        }
+                        /*if (dR.size() == 0) {
+                         std::cout << "No match for jet no. " << i << std::endl;
+                         }
+                         if (dR.size() == 1) {
+                         //std::cout << "Perfect!" << std::endl;
+                         }
+                         if (dR.size() >= 1) {
+                         std::cout << "Matched!" << std::endl;
+                         }*/
+                        if (dR.size() > 1) {
+                            //std::cout << "oh noes multiple matches!" << std::endl;
+                            multiMatch = 1;
+                        }
+                        if (minkey == -1) {
+                            matchingQuark = nullQuark;
+                            quark[i+1] = matchingQuark;
+                            //std::cout << "no match" << std::endl;
+                            //std::cout << "dR for jet no. " << i << " and tDaughter no. " << minkey << " = " << matchingQuark.dR << ", flavour = " << matchingQuark.quark <<std::endl;
+                            continue;
+                        }
+                        matchingQuark.quark = tDaughters[minkey].pdgId();
+                        for (std::vector<int>::iterator it = barcodes.begin() ; it != barcodes.end(); ++it) { //If same particle used to match more than 1 jet, crash!
+                            //std::cout << barCount << " " << *it << std::endl;
+                            if (tDaughters[minkey].genParticle()->barcode() == *it) {
+                                //std::cout << "This particle has been used!" << std::endl;
+                                //matchingQuark.dR = dR[minkey];
+                                //matchingQuark.index = minkey;
+                                //std::cout << "dR for jet no. " << i << " and tDaughter no. " << minkey << " = " << matchingQuark.dR << ", flavour = " << matchingQuark.quark <<std::endl;
+                                throw 30;
+                            }
+                            barCount++;
+                        }
+                        barcodes.push_back(tDaughters[minkey].genParticle()->barcode());
+                        matchingQuark.dR = dR[minkey];
+                        matchingQuark.index = minkey;
+                        //std::cout << "match" << std::endl;
+                        //std::cout << "dR for jet no. " << i << " and tDaughter no. " << minkey << " = " << matchingQuark.dR << ", flavour = " << matchingQuark.quark <<std::endl;
+                        //std::cout << tDaughters[minkey].genParticle()->barcode() << std::endl;
+                        //std::cout << "--------" << std::endl;
+                        quark[i+1] = matchingQuark;
+                        numJetsMatched++;
+                    }
+                }
+                catch (int e) {
+                    if (e == 30) {
+                        //std::cout << "Invalidating event: set to -5 jets matched" << std::endl;
+                        numJetsMatched = -5;
+                        quark.clear();
+                        for (int i=0; i<numToMatch; ++i) {
+                            quark[i+1] = nullQuark;
+                        }
+                    }
+                    else {
+                        std::cout << "Something went wrong" << std::endl;
+                        throw e;
+                    }
+                }
+                /*std::cout << "Results" << std::endl;
+                std::cout << "num Matched: " << numJetsMatched << std::endl;
+                for (int i=1; i<=numToMatch; ++i) {
+                    std::cout << "dR for jet no. " << i-1 << " and tDaughter no. " << quark[i].index << " = " << quark[i].dR << ", flavour = " << quark[i].quark <<std::endl;
+                }*/
+                return numJetsMatched;
+            }
+        
+            /// Modified fillXttVariables 1/2/2015 to diagonise 3rd jet
+            void fillXttVariables(const Jets& jets, std::string label, std::string title, const FourMomentum &H1, const TagJet &b11,
+                                  const TagJet &b12, const FourMomentum &H2, const TagJet &b21, const TagJet &b22, double weight, ParticleVector &tDaughters)
+            {
+                _mW12 = -99, _mW34 = -99, _mt12 = -99, _mt34 = -99, _dRW12 = -99, _dRW34 = -99;
+                
+                _pt3rdJet12 = -99;
+                _eta3rdJet12 = -99;
+                _phi3rdJet12 = -99;
+                _y3rdJet12 = -99;
+                _m3rdJet12 = -99;
+                _pt3rdJet34 = -99;
+                _eta3rdJet34 = -99;
+                _phi3rdJet34 = -99;
+                _y3rdJet34 = -99;
+                _m3rdJet34 = -99;
+                
+                _numClosestFound = -10;
+                _multiMatch3rd = -10;
+                _num3rdJetsMatched = -10;
+                _sameClosest = -1;
+                _3rdMatchStatus = -4;
+                
+                _dR3rdJet12 = -99;
+                _dR3rdJet34 = -99;
+                
+                _quarkMatched3rdJet12 = -10;
+                _dRMatched3rdJet12 = -99;
+                _quarkMatched3rdJet34 = -10;
+                _dRMatched3rdJet34 = -99;
+
+                
+                Jets noDups;
+                int counter = 0;
+                double ptMinAll = -99;
+                double etaMaxAll = -99;
+                foreach(const Jet& j, jets)
+                {
+                    if (counter == 0) {
+                        ptMinAll = j.pt();
+                        etaMaxAll = fabs(j.eta());
+                    }
+                    if (j.pt() < ptMinAll) {
+                        ptMinAll = j.pt();
+                    }
+                    if (fabs(j.eta()) > etaMaxAll) {
+                        etaMaxAll = fabs(j.eta());
+                    }
+                    //std::cout << "A jet: " << counter << std::endl;
+                    //std::cout <<" pt = "<< j.pt() <<" GeV, eta = "<< j.eta() <<", phi = "<< j.phi() << std::endl;
+                    counter++;
+                    if(j.eta() == b11.eta() && j.phi() == b11.phi()) continue;
+                    if(j.eta() == b12.eta() && j.phi() == b12.phi()) continue;
+                    if(j.eta() == b21.eta() && j.phi() == b21.phi()) continue;
+                    if(j.eta() == b22.eta() && j.phi() == b22.phi()) continue;
+                    noDups.push_back(j);
+                }
+                //std::cout << "Min pt: " << ptMinAll << std::endl;
+                //std::cout << "Max eta: " << etaMaxAll << std::endl;
+                _ptMinAll = ptMinAll;
+                _etaMaxAll = etaMaxAll;
+                //std::cout << "In Xtt, Match Status: " << _quarkMatchStatus << std::endl;
+                //std::cout << "thirdIndexA: " << thirdIndex_A << std::endl;
+                //std::cout << "thirdIndexA: " << thirdIndex_B << std::endl;
+                assert(noDups.size() == jets.size() - 4);
+                const TagJet &leastTagged12 = b11.tagEff() >= b12.tagEff() ? b12 : b11;
+                const TagJet &leastTagged34 = b21.tagEff() >= b22.tagEff() ? b22 : b21;
+                //float mindR12 = 1.5, mindR34 = 1.5;
+                float mindR12 = 2.0, mindR34 = 2.0;
+                float mindR12_debug = 2.0, mindR34_debug = 2.0;
+                float mindR12_to1 = 100, mindR34_to1 = 100;
+                float dR12_to1 = 200, dR34_to1 = 200;
+                const Jet *closestJet12=NULL, *closestJet34=NULL;
+                //std::cout << "Number of non-selected jets found = " << noDups.size() << std::endl;
+                _numNonDup = noDups.size();
+                std::vector<TagJet> closestJets;
+                double numClosestPass12 = 0;
+                double numClosestPass34 = 0;
+                foreach(const Jet& j, noDups) //Now using additional condition that dR is closest to 1
+                {
+                    float dR12 = deltaR(leastTagged12, j);
+                    if(dR12 < mindR12 && dR12 > 0.1)
+                    {
+                        //mindR12 = dR12;
+                        dR12_to1 = fabs(1-dR12);
+                        if (dR12_to1 < mindR12_to1) {
+                            mindR12_to1 = dR12_to1;
+                            closestJet12 = &j;
+                            mindR12_debug = dR12;
+                        }
+                        //closestJet12 = &j;
+                        numClosestPass12++;
+                    }
+                    float dR34 = deltaR(leastTagged34, j);
+                    if(dR34 < mindR34 && dR34 > 0.1)
+                    {
+                        //mindR34 = dR34;
+                        dR34_to1 = fabs(1-dR34);
+                        if (dR34_to1 < mindR34_to1) {
+                            mindR34_to1 = dR34_to1;
+                            closestJet34 = &j;
+                            mindR34_debug = dR34;
+                        }
+                        //closestJet34 = &j;
+                        numClosestPass34++;
+                    }
+                    //std::cout << "Non dup jet:" << std::endl;
+                    //std::cout <<" pt = "<< j.pt() <<" GeV, eta = "<< j.eta() <<", phi = "<< j.phi() << std::endl;
+                }
+                //Old use minimun dR for 3 jet code
+                /*
+                foreach(const Jet& j, noDups)
+                {
+                    float dR12 = deltaR(leastTagged12, j);
+                    if(dR12 < mindR12 && dR12 > 0.1)
+                    {
+                        mindR12 = dR12;
+                        closestJet12 = &j;
+                    }
+                    float dR34 = deltaR(leastTagged34, j);
+                    if(dR34 < mindR34 && dR34 > 0.1)
+                    {
+                        mindR34 = dR34;
+                        closestJet34 = &j;
+                    }
+                }
+                */
+                //std::cout <<" mindR12 = "<< mindR12 << std::endl;
+                //std::cout <<" mindR34 = "<< mindR34 << std::endl;
+                //std::cout <<" mindR12_to1 = "<< mindR12_to1 << std::endl;
+                //std::cout <<" mindR34_to1 = "<< mindR34_to1 << std::endl;
+                //std::cout <<" mindR12 = "<< mindR12_debug << std::endl;
+                //std::cout <<" mindR34 = "<< mindR34_debug << std::endl;
+                //std::cout <<" numClosestPass12 = "<< numClosestPass12 << std::endl;
+                //std::cout <<" numClosestPass34 = "<< numClosestPass34 << std::endl;
+                _numClosestPass12 = numClosestPass12;
+                _numClosestPass34 = numClosestPass34;
+                if(closestJet12)
+                {
+                    _mW12 = (closestJet12->momentum() + leastTagged12.momentum()).mass();
+                    _mt12 = (closestJet12->momentum() + b11.momentum() + b12.momentum()).mass();	
+                    _dRW12 = mindR12;
+                    closestJets.push_back(TagJet(*closestJet12,-99,-100));
+                    _pt3rdJet12 = closestJet12->pt();
+                    _eta3rdJet12 = closestJet12->eta();
+                    _phi3rdJet12 = closestJet12->phi();
+                    _y3rdJet12 = closestJet12->rap();
+                    _m3rdJet12 = closestJet12->mass();
+                }
+                if(closestJet34)
+                {
+                    _mW34 = (closestJet34->momentum() + leastTagged34.momentum()).mass();
+                    _mt34 = (closestJet34->momentum() + b21.momentum() + b22.momentum()).mass();	
+                    _dRW34 = mindR34;
+                    closestJets.push_back(TagJet(*closestJet34,-99,-101));
+                    _pt3rdJet34 = closestJet34->pt();
+                    _eta3rdJet34 = closestJet34->eta();
+                    _phi3rdJet34 = closestJet34->phi();
+                    _y3rdJet34 = closestJet34->rap();
+                    _m3rdJet34 = closestJet34->mass();
+                }
+                if (closestJet12 || closestJet34) {
+                    _sameClosest = 2;
+                    //std::cout << "at least 1 closest Jet found!" << std::endl;
+                    
+                }
+                if (closestJet12 && closestJet34) {
+                    _sameClosest = 0;
+                    if(closestJet12->eta() == closestJet34->eta() && closestJet12->phi() == closestJet34->phi()){
+                        //std::cout << "closest Jets are same jets!" << std::endl;
+                        _sameClosest = 1;
+                        //std::cout <<" pt = "<< closestJet12->pt() <<" GeV, eta = "<< closestJet12->eta() <<", phi = "<< closestJet12->phi() << std::endl;
+                        //std::cout <<" pt = "<< closestJet34->pt() <<" GeV, eta = "<< closestJet34->eta() <<", phi = "<< closestJet34->phi() << std::endl;
+                        return;
+                    }
+                }
+                if (_quarkMatchStatus == 3 && _alignStatus == 2) {
+                    //std::cout << "This event is golden!" << std::endl;
+                    double multiMatch3rd = 0;
+                    double num3rdJetsMatched = 0;
+                    _numClosestFound = closestJets.size();
+                    std::map<int, quark_with_dR> quark;
+                    if (closestJets.size() > 0) {
+                        //std::cout << "some closest Jets Found!" << std::endl;
+                        ParticleVector thirdPar;
+                        thirdPar.push_back(tDaughters[thirdIndex_A]);
+                        thirdPar.push_back(tDaughters[thirdIndex_B]);
+                        int numToMatch = closestJets.size();
+                        num3rdJetsMatched = matchJetToPar(numToMatch, multiMatch3rd, quark, closestJets, thirdPar);
+                        _multiMatch3rd = multiMatch3rd;
+                        _num3rdJetsMatched = num3rdJetsMatched;
+                    }
+                    if (closestJet12) {
+                        _dR3rdJet12 = deltaR(*closestJet12, tDaughters[thirdIndex_A]);
+                        //std::cout << "_dR3rdJet12: " << _dR3rdJet12 << std::endl;
+                        map<int, quark_with_dR>::iterator it;
+                        for(it = quark.begin(); it != quark.end(); it++) {
+                            //std::cout << "key: " << it.first << ", dR: " << it.second.dR << std::endl;
+                            if (it->second.dR == _dR3rdJet12) {
+                                _quarkMatched3rdJet12 = it->second.quark;
+                                _dRMatched3rdJet12 = it->second.dR;
+                            }
+                        }
+                    }
+                    if (closestJet34) {
+                        _dR3rdJet34 = deltaR(*closestJet34, tDaughters[thirdIndex_B]);
+                        //std::cout << "_dR3rdJet34: " << _dR3rdJet34 << std::endl;
+                        map<int, quark_with_dR>::iterator it;
+                        for(it = quark.begin(); it != quark.end(); it++) {
+                            //std::cout << "key: " << it.first << ", dR: " << it.second.dR << std::endl;
+                            if (it->second.dR == _dR3rdJet34) {
+                                _quarkMatched3rdJet34 = it->second.quark;
+                                _dRMatched3rdJet34 = it->second.dR;
+                            }
+                        }
+                    }
+                    if (num3rdJetsMatched == -5) {
+                        _3rdMatchStatus = -5;
+                    }
+                    else if (closestJets.size() == 2 && num3rdJetsMatched <= 2) {
+                        if (closestJets.size() == 2 && num3rdJetsMatched == 0) {
+                            _3rdMatchStatus = -1;
+                        }
+                        else if (closestJets.size() == 2 && num3rdJetsMatched == 2) {
+                            _3rdMatchStatus = 3;
+                        }
+                        else {
+                            _3rdMatchStatus = 2;
+                        }
+                    }
+                    else if (closestJets.size() == 1 && num3rdJetsMatched < 2) {
+                        if (closestJets.size() == 1 && num3rdJetsMatched == 0) {
+                            _3rdMatchStatus = -2;
+                        }
+                        else {
+                            _3rdMatchStatus = 1;
+                        }
+                    }
+                    else if (closestJets.size() == 0 && num3rdJetsMatched == 0) {
+                        _3rdMatchStatus = 0;
+                    }
+                    else {
+                        _3rdMatchStatus = -3;
+                    }
+                    /*
+                    foreach(const TagJet& j, closestJets)
+                    {
+                        //std::cout << "RUNNING FILLER " << std::endl;
+                        if (j.flavour() == -100) {
+                            _pt3rdJet12 = j.pt();
+                            _eta3rdJet12 = j.eta();
+                            _phi3rdJet12 = j.phi();
+                            _y3rdJet12 = j.rap();
+                            _m3rdJet12 = j.mass();
+                        }
+                        if (j.flavour() == -101) {
+                            _pt3rdJet34 = j.pt();
+                            _eta3rdJet34 = j.eta();
+                            _phi3rdJet34 = j.phi();
+                            _y3rdJet34 = j.rap();
+                            _m3rdJet34 = j.mass();
+                        }
+                    }
+                    */
+                    //std::cout << "3rdMatchStatus: " << _3rdMatchStatus << std::endl;
+
+                }
+            }
+            /*
+            /// Fill histograms for the 5 unique angles in H->bb [Phys. Rev. D 86 095031 (2012)]
 			void fillXttVariables(const Jets& jets, std::string label, std::string title, const FourMomentum &H1, const TagJet &b11, 
 					const TagJet &b12, const FourMomentum &H2, const TagJet &b21, const TagJet &b22, double weight) 
 			{
@@ -1082,7 +1410,7 @@ namespace Rivet {
 					_dRW34 = mindR34;
 				}
 			}
-
+             */
 			/// Fill a histogram with the unsigned PDG ID of daughter particles for given parent particle
 			void fillDaughters(std::string label, std::string title, const HepMC::GenParticle *parent, double weight) {
 
@@ -1341,17 +1669,17 @@ namespace Rivet {
 				assert(fuzzyEquals(q2, q21+q22, 1e-4));
 
 				Vector3 nZ(0., 0., 1.);
-				Vector3 n1  = q11.p().cross(q12.p()).unit();
-				Vector3 n2  = q21.p().cross(q22.p()).unit();
-				Vector3 nSC = nZ.cross(q1.p()).unit();
+				Vector3 n1  = q11.p3().cross(q12.p3()).unit();
+				Vector3 n2  = q21.p3().cross(q22.p3()).unit();
+				Vector3 nSC = nZ.cross(q1.p3()).unit();
 
 				//PRINT(n1);
 				//PRINT(n2);
 				//PRINT(nSC);
 
-				cos_theta_star = cos(q1.p().theta()-nZ.theta());
-				phi  = sign(q1.p().dot(n1.cross(n2))) * acos(-n1.dot(n2));
-				phi1 = sign(q1.p().dot(n1.cross(nSC))) * acos(n1.dot(nSC));
+				cos_theta_star = cos(q1.p3().theta()-nZ.theta());
+				phi  = sign(q1.p3().dot(n1.cross(n2))) * acos(-n1.dot(n2));
+				phi1 = sign(q1.p3().dot(n1.cross(nSC))) * acos(n1.dot(nSC));
 
 				LorentzTransform to_H1_CoM(-q1_lab.boostVector());
 				LorentzTransform to_H2_CoM(-q2_lab.boostVector());
@@ -1359,8 +1687,8 @@ namespace Rivet {
 				FourMomentum q11_H1 = to_H1_CoM.transform(q11_lab);
 				FourMomentum q21_H2 = to_H2_CoM.transform(q21_lab);
 
-				cos_theta1 = q1.p().dot(q11_H1.p()) / sqrt(q1.p().mod2()*q11_H1.p().mod2());
-				cos_theta2 = q2.p().dot(q21_H2.p()) / sqrt(q2.p().mod2()*q21_H2.p().mod2());
+				cos_theta1 = q1.p3().dot(q11_H1.p3()) / sqrt(q1.p3().mod2()*q11_H1.p3().mod2());
+				cos_theta2 = q2.p3().dot(q21_H2.p3()) / sqrt(q2.p3().mod2()*q21_H2.p3().mod2());
 			}
 			//@}
 
@@ -1388,22 +1716,22 @@ namespace Rivet {
         
             double _quarkMiss12, _ptMiss12, _etaMiss12, _phiMiss12, _yMiss12, _mMiss12;
             double _quarkMiss34, _ptMiss34, _etaMiss34, _phiMiss34, _yMiss34, _mMiss34;
-            double _numJetsMatched, _numHadrons, _hadronMatchStatus, _alignStatus, _multiMatch;
+            double _numJetsMatched, _numQuarks, _quarkMatchStatus, _alignStatus, _multiMatch;
+            double _numNonDup, _ptMinAll, _etaMaxAll, _numClosestFound, _multiMatch3rd, _num3rdJetsMatched, _sameClosest, _3rdMatchStatus;
             double _charge12, _charge34;
-            double  _bLeadStatus12, _bLeadStatus34;
+            double _bLeadStatus12, _bLeadStatus34;
             double _dijetsHaveTwoBquarks, _bothBleading;
             double _dR_sublead12, _dR_sublead34;
             double _dR_lead12, _dR_lead34;
             double _dR_Wquarks12, _dR_Wquarks34;
             double _quark1, _quark2, _quark3, _quark4;
             double _deltaR1, _deltaR2, _deltaR3, _deltaR4;
+            double thirdIndex_A, thirdIndex_B;
+            double _numClosestPass12, _numClosestPass34;
         
-            struct quark_with_dR {
-                double quark;
-                double index;
-                double dR;
-            };
-        
+            double _quarkMatched3rdJet12, _pt3rdJet12, _eta3rdJet12, _phi3rdJet12, _y3rdJet12, _m3rdJet12, _dR3rdJet12, _dRMatched3rdJet12;
+            double _quarkMatched3rdJet34, _pt3rdJet34, _eta3rdJet34, _phi3rdJet34, _y3rdJet34, _m3rdJet34, _dR3rdJet34, _dRMatched3rdJet34;
+
 			/// @name Histograms
 			//@{
 			map<string, shared_ptr<YODA::Histo1D> > _histograms_1d;
