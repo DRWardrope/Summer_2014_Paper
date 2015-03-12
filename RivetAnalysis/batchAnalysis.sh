@@ -1,4 +1,4 @@
-#!/bin/bash
+#/bin/bash
 #Needs directory to process as a command line argument.
 if [ $# -lt 1 ]
 then
@@ -8,7 +8,7 @@ fi
 INPUTDIR=$1
 PROCESS=`echo $INPUTDIR | rev | cut -d '/' -f1 | rev`
 echo $PROCESS
-QUEUE=short
+QUEUE=medium
 RIVETDIR=/unix/atlas3/wardrope/2014Paper/Rivet2HHAnalysis
 OUTPUTDIR=/unix/atlas3/wardrope/2014Paper/AnaResults/$PROCESS
 ls $OUTPUTDIR
@@ -39,6 +39,7 @@ then
 	XSEC=0.011586
 elif [ $PROCESS == "pp_bbbb" ]
 then 
+	INCR=4
 	XSEC=146.03
 elif [ $PROCESS == "pp_bbcc" ]
 then 
@@ -60,7 +61,7 @@ then
 fi
  
 #echo "Increment is $INCR"
-#for COUNTER in `seq 0 $INCR 1`
+#for COUNTER in `seq 0 $INCR $INCR`
 for COUNTER in `seq 0 $INCR ${#ARRAY[*]}`
 do
 	echo \#! /bin/sh > $PROCESS$COUNTER.sh
@@ -77,7 +78,7 @@ do
 	echo source /unix/atlas3/wardrope/Generation/rivet/local/rivetenv.sh >> $PROCESS$COUNTER.sh
 	echo source /unix/atlas3/wardrope/Generation/rivet/local/yodaenv.sh >> $PROCESS$COUNTER.sh
 	RIVETCMD="rivet -a Summer_2014_Study --runname=$PROCESS -H ${PROCESS}_$COUNTER.yoda --cross-section=$XSEC"
-	let UP=$COUNTER+$INCR
+	let UP=$COUNTER+$INCR-1
 	for IFILE in `seq $COUNTER 1 $UP`
 	do
 		RIVETCMD="$RIVETCMD ${ARRAY[$IFILE]}"
