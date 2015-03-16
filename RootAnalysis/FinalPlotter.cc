@@ -12,7 +12,7 @@
 
 void bookPlots(LittlePlotter& plotter);
 TMVA::Reader* bookTopVeto(float& f_mW12, float& f_mt12, float& f_mW34, float& f_mt34);
-TMVA::Reader* bookMelaMVA(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& f_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
+TMVA::Reader* bookMelaMVA(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& f_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1, float& f_Xtt);
 std::string formatNumberForTable(float num);
 //void makeTMVAInput(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& f_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
 void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std::string caption);
@@ -20,7 +20,8 @@ void setupFileList(std::vector<TFile*>& files);
 std::map<TString, TTree*> setupOutputTrees(const std::vector<TString>& categories, float& weight,
 												float& f_mX, float& f_yX, float& f_ptX, 
 												float& f_m12, float& f_m34, float& f_cosThetaStar, 
-												float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1);
+												float& f_cosTheta1, float& f_cosTheta2, float& f_phi, 
+												float& modPhi1, float& f_Xtt);
 void setupTrees(const std::vector<TFile*>& files, std::vector<TString>& categories, std::map<TString, TTree*>& trees, std::map<TString, TTree*>& metaTrees);
 
 //                         l                    c    b                                                tau
@@ -55,16 +56,17 @@ int main( int argc, char** argv )
 	float f_ptX, f_yX, f_mX, f_cosTheta1, f_cosTheta2;
 	float f_mW12, f_mt12, f_dRW12, f_m12;
 	float f_mW34, f_mt34, f_dRW34, f_m34;
+	float f_Xtt;
 	float weight; 
 	TFile* fOut;
 	if(makeTmvaInput) 
 	{
 		fOut = TFile::Open("TMVAInput.root", "RECREATE");
-		outTrees = setupOutputTrees(categories, weight, f_mX, f_yX, f_ptX, f_m12, f_m34, f_cosThetaStar, f_cosTheta1, f_cosTheta2, f_phi, modPhi1);
+		outTrees = setupOutputTrees(categories, weight, f_mX, f_yX, f_ptX, f_m12, f_m34, f_cosThetaStar, f_cosTheta1, f_cosTheta2, f_phi, modPhi1, f_Xtt);
 	}
 	//Initialise the TMVA readers for the top veto and the final kinematic selection
 	TMVA::Reader* topVeto = bookTopVeto(f_mW12, f_mt12, f_mW34, f_mt34);
-	TMVA::Reader* finalMVA = makeTmvaInput ? 0 : bookMelaMVA(f_mX, f_yX, f_ptX, f_m12, f_m34, f_cosThetaStar, f_cosTheta1, f_cosTheta2, f_phi, modPhi1);
+	TMVA::Reader* finalMVA = makeTmvaInput ? 0 : bookMelaMVA(f_mX, f_yX, f_ptX, f_m12, f_m34, f_cosThetaStar, f_cosTheta1, f_cosTheta2, f_phi, modPhi1, f_Xtt);
 
 	LittlePlotter plotter(categories);
 	bookPlots(plotter);
@@ -166,11 +168,12 @@ int main( int argc, char** argv )
 			//Apply top veto.
 			float topMVA = topVeto->EvaluateMVA("BDT");
 			plotter.fill("TopVetoBDT", topMVA, weight);
-			if(topMVA < -0.06) continue;
+			if(topMVA < -0.05) continue;
 			plotter.fill("topVeto_cosThetaStar", cosThetaStar, weight);
 			f_cosThetaStar = cosThetaStar;
 			f_ptX = ptX; f_mX = mX; f_phi = phi; f_yX = yX;
 			f_m12 = m12; f_m34 = m34;
+			f_Xtt = topMVA;
 			//abs_cosTheta1 = fabs(cosTheta1);
 			//abs_cosTheta2 = fabs(cosTheta2);
 			f_cosTheta1 = cosTheta1;
@@ -189,8 +192,7 @@ int main( int argc, char** argv )
 			plotter.fill("ptX", ptX, weight);
 			float bdt = finalMVA ? finalMVA->EvaluateMVA("BDT") : 0;
 			plotter.fill("BDT", bdt, weight);
-			//if(bdt < 0.0006) continue;
-			if(bdt < 0.0023) continue;
+			if(bdt < 0.0367) continue;
 			plotter.fill("postBDT_m34", m34, weight);
 			plotter.fill("MelaMVA_cosThetaStar", cosThetaStar, weight);
 		}
@@ -306,7 +308,7 @@ TMVA::Reader* bookTopVeto(float& f_mW12, float& f_mt12, float& f_mW34, float& f_
 	topVeto->BookMVA("BDT", "TopVetoWeights/TMVAClassification_BDT.weights.xml");
 	return topVeto;
 }
-TMVA::Reader* bookMelaMVA(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& f_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1)
+TMVA::Reader* bookMelaMVA(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, float& f_m34, float& f_cosThetaStar, float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1, float& f_Xtt)
 {
 	TMVA::Reader* reader = new TMVA::Reader( "!Color:!Silent" );
 	reader->AddVariable("mX", &f_mX);
@@ -319,6 +321,7 @@ TMVA::Reader* bookMelaMVA(float& f_mX, float& f_yX, float& f_ptX, float& f_m12, 
 	reader->AddVariable("cosTheta2", &f_cosTheta2);
 	reader->AddVariable("Phi", &f_phi);
 	reader->AddVariable("modPhi1", &modPhi1);
+	reader->AddVariable("Xtt", &f_Xtt);
    	//factory->AddVariable( "cosTheta1 := abs(cosTheta1)",                "|cos(#theta_{1})|", "", 'D' );
     //factory->AddVariable( "Phi",                "#Phi", "", 'D' );
 	reader->BookMVA("BDT", "MelaWeights/TMVAClassification_BDT.weights.xml");
@@ -412,7 +415,8 @@ void printCutFlow(LittlePlotter& plotter, std::vector<TString>& categories, std:
 std::map<TString, TTree*> setupOutputTrees(const std::vector<TString>& categories, float& weight,
 												float& f_mX, float& f_yX, float& f_ptX, 
 												float& f_m12, float& f_m34, float& f_cosThetaStar, 
-												float& f_cosTheta1, float& f_cosTheta2, float& f_phi, float& modPhi1)
+												float& f_cosTheta1, float& f_cosTheta2, float& f_phi,
+												float& modPhi1, float& f_Xtt)
 {
 	std::map<TString, TTree*> outTrees;
 	for(std::vector<TString>::const_iterator catIt = categories.begin(); catIt != categories.end(); ++catIt)
@@ -429,6 +433,7 @@ std::map<TString, TTree*> setupOutputTrees(const std::vector<TString>& categorie
 		outTrees[*catIt]->Branch("modPhi1", &modPhi1, "modPhi1/F");
 		outTrees[*catIt]->Branch("cosTheta1", &f_cosTheta1, "cosTheta1/F");
 		outTrees[*catIt]->Branch("cosTheta2", &f_cosTheta2, "cosTheta2/F");
+		outTrees[*catIt]->Branch("Xtt", &f_Xtt, "Xtt/F");
 	}
 	return outTrees;
 }

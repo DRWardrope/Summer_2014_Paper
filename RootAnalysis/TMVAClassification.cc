@@ -184,10 +184,11 @@ int main( int argc, char** argv )
    factory->AddVariable( "m12",                "m_{12}", "GeV", 'D' );
    factory->AddVariable( "m34",                "m_{34}", "GeV", 'D' );
    factory->AddVariable( "cosThetaStar",                "cos(#Theta*)", "", 'D' );
-   factory->AddVariable( "cosTheta1",                "|cos(#theta_{1})|", "", 'D' );
-   factory->AddVariable( "cosTheta2",                "|cos(#theta_{2})|", "", 'D' );
+   factory->AddVariable( "cosTheta1",                "cos(#theta_{1})", "", 'D' );
+   factory->AddVariable( "cosTheta2",                "cos(#theta_{2})", "", 'D' );
    factory->AddVariable( "Phi",                "#Phi", "", 'D' );
    factory->AddVariable( "modPhi1",                "|#Phi_{1}| - #pi/2", "", 'D' );
+   factory->AddVariable( "Xtt",                "X_{tt}", "", 'D' );
 
    // You can add so-called "Spectator variables", which are not used in the MVA training,
    // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
