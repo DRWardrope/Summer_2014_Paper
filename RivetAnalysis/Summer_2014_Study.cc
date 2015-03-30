@@ -1163,14 +1163,15 @@ namespace Rivet {
                 //float mindR12 = 1.5, mindR34 = 1.5;
                 float mindR12 = 2.0, mindR34 = 2.0;
                 float mindR12_debug = 2.0, mindR34_debug = 2.0;
-                float mindR12_to1 = 100, mindR34_to1 = 100;
-                float dR12_to1 = 200, dR34_to1 = 200;
+                //float mindR12_to1 = 100, mindR34_to1 = 100;
+                //float dR12_to1 = 200, dR34_to1 = 200;
                 const Jet *closestJet12=NULL, *closestJet34=NULL;
                 //std::cout << "Number of non-selected jets found = " << noDups.size() << std::endl;
                 _numNonDup = noDups.size();
                 std::vector<TagJet> closestJets;
                 double numClosestPass12 = 0;
                 double numClosestPass34 = 0;
+                /*
                 foreach(const Jet& j, noDups) //Now using additional condition that dR is closest to 1
                 {
                     float dR12 = deltaR(leastTagged12, j);
@@ -1202,24 +1203,31 @@ namespace Rivet {
                     //std::cout << "Non dup jet:" << std::endl;
                     //std::cout <<" pt = "<< j.pt() <<" GeV, eta = "<< j.eta() <<", phi = "<< j.phi() << std::endl;
                 }
+                 */
                 //Old use minimun dR for 3 jet code
-                /*
                 foreach(const Jet& j, noDups)
                 {
                     float dR12 = deltaR(leastTagged12, j);
+                    if(dR12 < mindR12_debug && dR12 > 0.1)
+                    {
+                        numClosestPass12++;
+                    }
                     if(dR12 < mindR12 && dR12 > 0.1)
                     {
                         mindR12 = dR12;
                         closestJet12 = &j;
                     }
                     float dR34 = deltaR(leastTagged34, j);
+                    if(dR34 < mindR34_debug && dR34 > 0.1)
+                    {
+                        numClosestPass34++;
+                    }
                     if(dR34 < mindR34 && dR34 > 0.1)
                     {
                         mindR34 = dR34;
                         closestJet34 = &j;
                     }
                 }
-                */
                 //std::cout <<" mindR12 = "<< mindR12 << std::endl;
                 //std::cout <<" mindR34 = "<< mindR34 << std::endl;
                 //std::cout <<" mindR12_to1 = "<< mindR12_to1 << std::endl;

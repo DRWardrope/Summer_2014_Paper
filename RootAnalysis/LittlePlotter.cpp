@@ -202,6 +202,11 @@ void LittlePlotter::plotBeforeAfter(TString plotNameBefore, TString plotNameAfte
         g2->Sumw2();
         g2->Divide(h1);
         g2->GetYaxis()->SetTitle("After/Before");
+        g2->GetXaxis()->SetTitleSize(0.07);
+        g2->GetYaxis()->SetTitleSize(0.07);
+        g2->GetYaxis()->SetTitleOffset(0.5);
+        g2->SetLabelSize(0.07, "X");
+        g2->SetLabelSize(0.07, "Y"); //New line!
         
         if(afterPlot->GetMaximum() > beforePlot->GetMaximum()) {
             afterPlot->Draw("HIST");

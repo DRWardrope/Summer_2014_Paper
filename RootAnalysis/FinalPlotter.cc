@@ -11,7 +11,7 @@
 #include "TMVA/Reader.h"
 
 void bookPlots(LittlePlotter& plotter);
-TMVA::Reader* bookTopVeto(float& f_mW12, float& f_mt12, float& f_mW34, float& f_mt34);
+TMVA::Reader* bookTopVeto(float& f_mW12, float& f_mt12, float& f_dRW12, float& f_pt12, float& f_mW34, float& f_mt34, float& f_dRW34, float& f_pt34);
 
 std::string formatNumberForTable(float num);
 
@@ -67,26 +67,28 @@ int main( int argc, char** argv )
     //Annoyingly, TMVA::Reader can only use floats, not doubles! So, duplicate everything.
     float f_cosThetaStar, abs_cosTheta1, abs_cosTheta2, modPhi1, f_phi;
     float f_ptX, f_yX, f_mX, f_cosTheta1, f_cosTheta2;
-    float f_mW12, f_mt12, f_dRW12, f_m12;
-    float f_mW34, f_mt34, f_dRW34, f_m34;
+    float f_mW12, f_mt12, f_dRW12, f_m12, f_pt12;
+    float f_mW34, f_mt34, f_dRW34, f_m34, f_pt34;
     float f_Xtt;
     float weight;
     TFile* fOut;
     
     //Initialise the TMVA readers for the top veto and the final kinematic selection
-    TMVA::Reader* topVeto = bookTopVeto(f_mW12, f_mt12, f_mW34, f_mt34);
+    TMVA::Reader* topVeto = bookTopVeto(f_mW12, f_mt12, f_dRW12, f_pt12, f_mW34, f_mt34, f_dRW34, f_pt34);
     
     LittlePlotter plotter(categories);
     bookPlots(plotter);
     //These are interim code inserted to produce 2D plots. Needs cleaning up/more elegant solution.
     //To activate, search "2Dplot" and uncomment
-    /*
+    
     TH2F *h12 = new TH2F("charge12","charge34",50, -2, 2, 50, -2, 2);
     TH2F *pq12 = new TH2F("pt12","dR_Wquarks12",50, 100., 700., 50, 0., 5.);
     TH2F *pq34 = new TH2F("pt34","dR_Wquarks34",50, 100., 700., 50, 0., 5.);
     TH2F *p12 = new TH2F("pt12","dRW12",50, 100., 700., 50, 0., 5.);
     TH2F *p34 = new TH2F("pt34","dRW34",50, 100., 700., 50, 0., 5.);
-    */
+    TH2F *ptt12 = new TH2F("pt12","pt3rdJet12",50, 0., 700., 50, 0., 700.);
+    TH2F *ptt34 = new TH2F("pt34","pt3rdJet34",50, 0., 700., 50, 0., 700.);
+    
     for(std::map<TString, TTree*>::iterator treeIt = trees.begin(); treeIt != trees.end(); ++treeIt)
     {
         plotter.setCurrentCat(treeIt->first);
@@ -272,13 +274,15 @@ int main( int argc, char** argv )
             
             //2D Plots fun
             //2Dplot
-            /*
+            
             h12->Fill(charge12,charge34);
             pq12->Fill(pt12,dR_Wquarks12);
             pq34->Fill(pt34,dR_Wquarks34);
             p12->Fill(pt12,dRW12);
             p34->Fill(pt34,dRW34);
-            */
+            ptt12->Fill(pt12,pt3rdJet12);
+            ptt34->Fill(pt34,pt3rdJet34);
+            
             //Fill plots before top veto
             plotter.fill("before_mX", mX, weight);
             plotter.fill("before_m12", m12, weight);
@@ -389,7 +393,7 @@ int main( int argc, char** argv )
             //Apply top veto.
             float topMVA = topVeto->EvaluateMVA("BDT");
             plotter.fill("TopVetoBDT", topMVA, weight);
-            if(topMVA < -0.05) continue;
+            if(topMVA < -0.11) continue; //original old is -0.05, now using new weights
             plotter.fill("topVeto_cosThetaStar", cosThetaStar, weight);
 
             //Fill plots after top veto
@@ -667,7 +671,7 @@ int main( int argc, char** argv )
     plotter.plotBeforeAfter("before_PhiB", "PhiB", categories);
     */
     //2Dplot
-    /*
+    
     TCanvas *charge = new TCanvas("charge","charge12 vs charge34", 3000, 2500);
     charge->cd(1);
     h12->SetXTitle("charge12");
@@ -698,7 +702,19 @@ int main( int argc, char** argv )
     p34->SetYTitle("dRW34");
     p34 ->Draw("colz");
     ptdRW34->Print("ptdRW34.pdf","pdf");
-    */
+    TCanvas *ptdt12 = new TCanvas("ptt12","pt12 vs pt3rdJet12", 3000, 2500);
+    ptdt12->cd(1);
+    ptt12->SetXTitle("pt12");
+    ptt12->SetYTitle("pt3rdJet12");
+    ptt12 ->Draw("colz");
+    ptdt12->Print("ptt12.pdf","pdf");
+    TCanvas *ptdt34 = new TCanvas("ptt34","pt34 vs pt3rdJet34", 3000, 2500);
+    ptdt34->cd(1);
+    ptt34->SetXTitle("pt34");
+    ptt34->SetYTitle("pt3rdJet34");
+    ptt34 ->Draw("colz");
+    ptdt34->Print("ptt34.pdf","pdf");
+    
     plotter.plotBeforeAfter("before_quarkMiss12", "quarkMiss12", categories);
     plotter.plotBeforeAfter("before_ptMiss12", "ptMiss12", categories);
     //plotter.plotBeforeAfter("before_mMiss12", "mMiss12", categories);
@@ -1041,13 +1057,17 @@ void bookPlots(LittlePlotter& plotter)
 
     std::cout<<"bookPlots: ending."<< std::endl;
 }
-TMVA::Reader* bookTopVeto(float& f_mW12, float& f_mt12, float& f_mW34, float& f_mt34)
+TMVA::Reader* bookTopVeto(float& f_mW12, float& f_mt12, float& f_dRW12, float& f_pt12, float& f_mW34, float& f_mt34, float& f_dRW34, float& f_pt34)
 {
     TMVA::Reader* topVeto = new TMVA::Reader( "!Color:!Silent" );
     topVeto->AddVariable("mW12", &f_mW12);
     topVeto->AddVariable("mt12", &f_mt12);
+    topVeto->AddVariable("dRW12", &f_dRW12);
+    topVeto->AddVariable("pt12", &f_pt12);
     topVeto->AddVariable("mW34", &f_mW34);
     topVeto->AddVariable("mt34", &f_mt34);
+    topVeto->AddVariable("dRW34", &f_dRW34);
+    topVeto->AddVariable("pt34", &f_pt34);
     topVeto->BookMVA("BDT", "TopVetoWeights/TMVAClassification_BDT.weights.xml");
     return topVeto;
 }
