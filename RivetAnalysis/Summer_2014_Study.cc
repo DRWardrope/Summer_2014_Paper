@@ -27,37 +27,26 @@ namespace Rivet {
 			Summer_2014_Study()
 				: Analysis("Summer_2014_Study")
 			{    
-//				std::cout<<"Handler name = "<< handler().runName() << std::endl;	
-				//setNeedsCrossSection();
 			}
 
 
 		public:
 
-			/// @name Analysis methods
-			//@{
-
 			/// Book histograms and initialise projections before the run
 			void init()
 			{
 				//_crossSection = handler().crossSection();
+				//Create final State projection with added ghost particles.
 				FinalStateWithGhosts fs(-5.0, 5.0);
 				fs.ghostIdPair(PID::BQUARK);
+				fs.ghostIdPair(PID::CQUARK);
 				fs.ghostIdPair(PID::TAU);
 				addProjection(fs, "FS");
 
 				FastJets akt4(fs, FastJets::ANTIKT, 0.4);
-				//fj.useInvisibles();
 				addProjection(akt4, "AntiKt4");
 
-				FastJets ca12(fs, FastJets::CAM, 1.2);
-				addProjection(ca12, "CA12");
 				bookTree();
-				/// @todo Initialise and register projections here
-
-				/// @todo Book histograms here, e.g.:
-				// _h_XXXX = bookProfile1D(1, 1, 1);
-				// _h_YYYY = bookHisto1D(2, 1, 1);
 
 			}
 
@@ -66,106 +55,14 @@ namespace Rivet {
 			void analyze(const Event& event) 
 			{
 				const double weight = event.weight();
-				// Signal
-			/*	ParticleVector higgses, bquarks;
-				HepMC::GenEvent::particle_const_iterator it;
-				for (it=event.genEvent()->particles_begin(); it!=event.genEvent()->particles_end(); ++it) 
-				{
-
-					const HepMC::GenParticle *particle = *it;
-					if (particle->pdg_id() == 25) {
-
-						HepMC::GenVertex *decay = particle->end_vertex();
-						if (decay && decay->particles_out_size() == 2) {
-							higgses.push_back(*particle); // implicit conversion HepMC::GenParticle -> Rivet::Particle
-
-							HepMC::GenVertex::particles_out_const_iterator itv;
-							for (itv=decay->particles_out_const_begin(); itv!=decay->particles_out_const_end(); ++itv) {
-								if (abs((*itv)->pdg_id()) == 5) {
-									bquarks.push_back(*findLastInChain(*itv));
-								}
-							}
-						}
-					}
-				}
-
-				// For background select based on the final state
-				// Find 4 b-quarks that are created from something non-b
-				// Pair them into two Higgs bosons with sufficient boost (mass?)
-				// Trace them to the final b-quarks
-
-				// QCD background?
-				if (higgses.size() == 0) {
-
-					ParticleVector initial_b, initial_bbar;
-
-					HepMC::GenEvent::vertex_const_iterator it_vtx;
-					for (it_vtx=event.genEvent()->vertices_begin(); it_vtx!=event.genEvent()->vertices_end(); ++it_vtx) {
-						const HepMC::GenVertex *vertex  =*it_vtx;
-
-						bool skip = false;
-						HepMC::GenVertex::particles_in_const_iterator it_in;
-						for (it_in=vertex->particles_in_const_begin(); it_in!=vertex->particles_in_const_end(); ++it_in) {
-							const HepMC::GenParticle *particle = *it_in;
-
-							if (abs(particle->pdg_id()) == 5) skip = true;
-						}
-
-						if (skip) continue;
-
-						HepMC::GenVertex::particles_out_const_iterator it_out;
-						for (it_out=vertex->particles_out_const_begin(); it_out!=vertex->particles_out_const_end(); ++it_out) {
-							const HepMC::GenParticle *particle = *it_out;
-
-							if (particle->pdg_id() == 5) {
-								initial_b.push_back(*particle);
-							} else if (particle->pdg_id() == -5) {
-								initial_bbar.push_back(*particle);
-							}
-						}
-					}
-
-					if (initial_b.size() == 2 && initial_bbar.size() == 2) {
-						// Alternative combination - have to check it is the same
-						bool alt = false;
-
-						higgses.push_back(Particle(0, initial_b[0].momentum()+initial_bbar[alt ? 1 : 0].momentum()));
-						higgses.push_back(Particle(0, initial_b[1].momentum()+initial_bbar[alt ? 0 : 1].momentum()));
-
-						bquarks.push_back(*findLastInChain(initial_b[0].genParticle()));
-						bquarks.push_back(*findLastInChain(initial_bbar[alt ? 1 : 0].genParticle()));
-						bquarks.push_back(*findLastInChain(initial_b[1].genParticle()));
-						bquarks.push_back(*findLastInChain(initial_bbar[alt ? 0 : 1].genParticle()));
-					}
-				}
-
-				const Jets &akt4 = applyProjection<JetAlg>(event, "AntiKt4").jetsByPt(40*GeV);
-				const Jets &ca12 = applyProjection<JetAlg>(event, "CA12"   ).jetsByPt(80*GeV);
-
-				if (higgses.size() == 2 && bquarks.size() == 4 
-						&& higgses[0].momentum().pT() > 150*GeV && higgses[1].momentum().pT() > 150*GeV) {
-
-					for (unsigned int i=0; i<4; ++i) {
-						fillKinematics("parton", "Parton", bquarks[i].momentum(), weight);
-					}
-					fillMelaAngles("parton", "Parton", higgses[0].momentum(), bquarks[0].momentum(),  bquarks[1].momentum(), 
-							higgses[1].momentum(), bquarks[2].momentum(), bquarks[3].momentum(), weight);
-
-					//PRINT(higgses.size());
-					//PRINT(bquarks.size());
-
-					fillReconstructionEfficiency("akt4", "Anti-$k_t$ 0.4 reconstruction efficiency",       higgses[0], bquarks[0], bquarks[1], akt4, weight);
-					fillReconstructionEfficiency("akt4", "Anti-$k_t$ 0.4 reconstruction efficiency",       higgses[1], bquarks[2], bquarks[3], akt4, weight);
-					fillReconstructionEfficiency("ca12", "Cambridge-Aachen 1.2 reconstruction efficiency", higgses[0], bquarks[0], bquarks[1], ca12, weight);
-					fillReconstructionEfficiency("ca12", "Cambridge-Aachen 1.0 reconstruction efficiency", higgses[1], bquarks[2], bquarks[3], ca12, weight);
-				}*/
 				bookAndFill1D("CutFlow", "Yields vs Selection Step", 0, "Selection Step", 5, -0.5, 4.5, weight);
+
 				const Jets &akt4 = applyProjection<JetAlg>(event, "AntiKt4").jetsByPt(40*GeV);
 				std::vector<TagJet> bjets;
 				bjets.reserve(4);
-				foreach(const Jet &j, akt4) {
-					if (j.momentum().pT() > 40*GeV 
-							&& fabs(j.momentum().rapidity()) < 2.5)
+				foreach(const Jet &j, akt4) 
+				{
+					if (fabs(j.momentum().rapidity()) < 2.5)
 					{
 						if(j.containsBottom())
 						{
@@ -192,62 +89,6 @@ namespace Rivet {
 					FourMomentum dijet2 = bjets[2].momentum()+bjets[3].momentum();
 					const float btaggedWeight = weight*bjets[0].tagEff()*bjets[1].tagEff()*bjets[2].tagEff()*bjets[3].tagEff();
 
-					//Xtt investigation
-					if(fabs(dijet1.mass() - 115.) < 25. && fabs(dijet2.mass() - 110.) < 25.)
-					{
-						HepMC::GenEvent::particle_const_iterator it;
-						for (it=event.genEvent()->particles_begin(); it!=event.genEvent()->particles_end(); ++it) 
-						{
-							const HepMC::GenParticle *particle = *it;
-							if (abs(particle->pdg_id()) == 24) 
-							{
-								HepMC::GenVertex *decay = particle->end_vertex();
-								if (decay && decay->particles_out_size() == 2) 
-								{
-							//		wBosons.push_back(*particle);
-									HepMC::GenVertex::particles_out_const_iterator itv;
-									ParticleVector wDaughters;
-									for (itv=decay->particles_out_const_begin(); itv!=decay->particles_out_const_end(); ++itv) {
-										//if (abs((*itv)->pdg_id()) == 5) {
-											wDaughters.push_back(*findLastInChain(*itv));
-										//}
-									}
-									/*std::cout<<"Number of w daughters found = "<< wDaughters.size() << std::endl;
-									for(int w = 0; w < wDaughters.size(); ++w)
-									{
-										std::cout<< w <<": id = "<< wDaughters[w].pdgId() <<", pt = "<< wDaughters[w].pt() <<" GeV, eta = "<< wDaughters[w].eta()
-												<<", phi = "<< wDaughters[w].phi() << std::endl;
-									}
-									std::cout<<"DeltaR(wDaughters[0], wDaughters[1]) = "<< deltaR(wDaughters[0], wDaughters[1]) << std::endl;*/
-									bookAndFill1D("Wdaughters_dR", "\\Delta R(W daughter 1, W daughter 2)", deltaR(wDaughters[0], wDaughters[1]) ,   "\\Delta R",   50, 0.,   5.,   btaggedWeight);
-								}
-							}else if(abs(particle->pdg_id()) == 6)
-							{
-								HepMC::GenVertex *decay = particle->end_vertex();
-								if (decay && decay->particles_out_size() == 2) 
-								{
-							//		wBosons.push_back(*particle);
-									HepMC::GenVertex::particles_out_const_iterator itv;
-									ParticleVector tDaughters;
-									for (itv=decay->particles_out_const_begin(); itv!=decay->particles_out_const_end(); ++itv) {
-										//if (abs((*itv)->pdg_id()) == 5) {
-											tDaughters.push_back(*findLastInChain(*itv));
-										//}
-									}
-									/*std::cout<<"Number of w daughters found = "<< tDaughters.size() << std::endl;
-									for(int w = 0; w < tDaughters.size(); ++w)
-									{
-										std::cout<< w <<": id = "<< tDaughters[w].pdgId() <<", pt = "<< tDaughters[w].pt() <<" GeV, eta = "<< tDaughters[w].eta()
-												<<", phi = "<< tDaughters[w].phi() << std::endl;
-									}
-									std::cout<<"DeltaR(tDaughters[0], tDaughters[1]) = "<< deltaR(tDaughters[0], tDaughters[1]) << std::endl;*/
-									bookAndFill1D("tDaughters_dR", "\\Delta R(t daughter 1, t daughter 2)", deltaR(tDaughters[0], tDaughters[1]) ,   "\\Delta R",   50, 0.,   5.,   btaggedWeight);
-								}
-
-							}
-						}
-					}
-			
 					fillKinematics("dijet", "Dijet", dijet1, btaggedWeight);
 					fillKinematics("dijet", "Dijet", dijet2, btaggedWeight);
 					for (unsigned int i=0; i<4; ++i) {
@@ -259,7 +100,6 @@ namespace Rivet {
 					bookAndFill1D("CutFlow", "Yields vs Selection Step", 2, "Selection Step", 5, -0.5, 4.5, weight);
 					//Use btaggedWeight to replicate effect of b-tagging.
 					bookAndFill1D("CutFlow", "Yields vs Selection Step", 3, "Selection Step", 5, -0.5, 4.5, btaggedWeight);
-						
 				}
 
 			}
@@ -315,6 +155,7 @@ namespace Rivet {
 				// normalize(_h_YYYY); // normalize to unity
 
 			}
+			//This sets the structure of the output TTree and associates the TBranches with variables.
 			void bookTree()
 			{
 				_fOut = TFile::Open("MVAResults.root", "RECREATE");
@@ -380,6 +221,7 @@ namespace Rivet {
 				_tree->Branch("cosTheta2", &_cosTheta2, "cosTheta2/D");
 
 			}
+			//fillMelaAngles fills the output TTree with angles calculated by calculateAngles().
 			void fillMelaAngles(const Event& event, std::string label, std::string title, const FourMomentum &H1, const TagJet &b11, 
 					const TagJet &b12, const FourMomentum &H2, const TagJet &b21, const TagJet &b22, double weight) 
 			{
@@ -449,22 +291,9 @@ namespace Rivet {
 				bookAndFill1D(label+"_cos_theta2",     title+" $\\cos(\\theta_2)$",   cos_theta2,       "$\\cos(\\theta_2)$",   50, -1.,   1.,   weight);
 				bookAndFill1D(label+"_abs_cos_theta1", title+" $|\\cos(\\theta_1)|$", fabs(cos_theta1), "$|\\cos(\\theta_1)|$", 50,  0.,   1.,   weight);
 				bookAndFill1D(label+"_abs_cos_theta2", title+" $|\\cos(\\theta_2)|$", fabs(cos_theta2), "$|\\cos(\\theta_2)|$", 50,  0.,   1.,   weight);
-
-
-				/*if (fabs(H1.pT() - 200*GeV) < 10*GeV) {
-					const FourMomentum &softest1 = b11.pT() < b12.pT() ? b11 : b12;
-					bookAndFill2D(label+"_ptmin_vs_cos_theta", title+" $p_{T,min}$ vs. $|\\cos(\\theta)|$", softest1.pT()/GeV, "$p_{T,min}$", 50, 0., 250., fabs(cos_theta1), "$|\\cos(\\theta)|$", 50, 0., 1., weight);
-					bookAndFill2D(label+"_ptmin_vs_dr",        title+" $p_{T,min}$ vs. $\\Delta R(b,b)$",   softest1.pT()/GeV, "$p_{T,min}$", 50, 0., 250., deltaR(b11, b12), "$\\Delta R(b,b)$",   50, 0., 5., weight);
-				}
-
-				if (fabs(H2.pT() - 200*GeV) < 10*GeV) {
-					const FourMomentum &softest2 = b21.pT() < b22.pT() ? b21 : b22;
-					bookAndFill2D(label+"_ptmin_vs_cos_theta", title+" $p_{T,min}$ vs. $|\\cos(\\theta)|$", softest2.pT()/GeV, "$p_{T,min}$", 50, 0., 250., fabs(cos_theta2), "$|\\cos(\\theta)|$", 50, 0., 1., weight);
-					bookAndFill2D(label+"_ptmin_vs_dr",        title+" $p_{T,min}$ vs. $\\Delta R(b,b)$",   softest2.pT()/GeV, "$p_{T,min}$", 50, 0., 250., deltaR(b21, b22), "$\\Delta R(b,b)$",   50, 0., 5., weight);
-				}*/
 			}
 
-			/// Fill histograms for the 5 unique angles in H->bb [Phys. Rev. D 86 095031 (2012)]
+			//fillXttVariables calculates variables that are useful for rejecting top-quark backgrounds. 
 			void fillXttVariables(const Jets& jets, std::string label, std::string title, const FourMomentum &H1, const TagJet &b11, 
 					const TagJet &b12, const FourMomentum &H2, const TagJet &b21, const TagJet &b22, double weight) 
 			{
@@ -650,33 +479,10 @@ namespace Rivet {
 				//hist->fill(x, y, weight);
 			}
 
-			bool dijetSelection(Jets &bjets) 
-			{
-
-				Jets input(bjets);
-				bjets.clear();
-
-				for (unsigned int i=0; i<input.size(); ++i) {
-					for (unsigned int j=i+1; j<input.size(); ++j) {
-						if (deltaR(input[i], input[j]) > 1.5) continue;
-						FourMomentum dijet = input[i].momentum() + input[j].momentum();
-
-						if (dijet.pT() < 150*GeV) continue;
-						if (fabs(dijet.mass()/GeV - 115) > 30) continue;
-
-						bjets.push_back(input[i]);
-						bjets.push_back(input[j]);
-
-						input.erase(input.begin() + j--);
-						input.erase(input.begin() + i--);
-						break;
-					}
-				}
-
-				return bjets.size() >= 4;
-			}
+			//tagGreater is used when sorting vector<TagJet> by b-tagging weight
         	static bool tagGreater(const TagJet& a, const TagJet& b){ return (a.tagEff() > b.tagEff()); }
-
+			//dijetSelection tries to find Higgs boson candidates from an input of vector<TagJet>.
+			//It re-orders the jets in this vector, such that bjets[0] and [1] correspond to Higgs 1 and [2] and [3] to Higgs 2
 			bool dijetSelection(std::vector<TagJet> &bjets) 
 			{
 				std::vector<TagJet> input = bjets;	
@@ -687,12 +493,15 @@ namespace Rivet {
 				}*/
 				bjets.clear();
 
-				/*for (unsigned int i=0; i<4; ++i) 
-				{
-					for (unsigned int j=i+1; j<4; ++j) 
-					{*/
+				/*std::cout<<"Input jet collection:"<<std::endl;
 				for (unsigned int i=0; i<input.size(); ++i) 
 				{
+					std::cout<< i <<": "<< input[i].pt() <<" GeV"<< std::endl;
+				}
+				//std::cout <<"------------------------------------------------"<< std::endl;*/
+				for (unsigned int i=0; i<input.size(); ++i) 
+				{
+					//std::cout<<"jet "<< i <<" pt = "<< input[i].pt() << std::endl;
 					for (unsigned int j=i+1; j<input.size(); ++j) 
 					{
 						if (deltaR(input[i], input[j]) > 1.5) continue;
@@ -700,12 +509,19 @@ namespace Rivet {
 
 						if (dijet.pT() < 150*GeV) continue;
 						//if (fabs(dijet.mass()/GeV - 115) > 25) continue;
-
+					//	std::cout<<"Dijet created from inputs "<<i <<" and "<< j <<". pt1 = "<< input[i].pt() <<", pt2 = "<< input[j].pt() <<" GeV"<< std::endl;
 						bjets.push_back(input[i]);
 						bjets.push_back(input[j]);
 
+							
 						input.erase(input.begin() + j--);
-						input.erase(input.begin() + i--);
+						input.erase(input.begin() + i--);//erases element at begin()+i, then decrements i by one, so we don't miss out an element because of the vector shortening.
+						/*std::cout<<"Input jet collection now contains:"<<std::endl;
+						for (unsigned int k=0; k<input.size(); ++k) 
+						{
+							std::cout<< k <<": "<< input[k].pt() <<" GeV"<< std::endl;
+						}
+						std::cout <<"..............................."<< std::endl;*/
 						break;
 					}
 				}
@@ -713,6 +529,7 @@ namespace Rivet {
 				return bjets.size() >= 4;
 			}
 
+			//calculateAngles works out the decay angles of the Higgs bosons.
 			void calculateAngles(const FourMomentum &q11_lab, const FourMomentum &q12_lab, 
 					const FourMomentum &q21_lab, const FourMomentum &q22_lab,
 					double &cos_theta_star, double &phi, double &phi1, 
