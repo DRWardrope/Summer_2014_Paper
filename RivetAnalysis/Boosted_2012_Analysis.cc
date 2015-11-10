@@ -141,7 +141,7 @@ namespace Rivet {
 				if(fabs(trimmed[0].eta() - trimmed[1].eta()) > 1.7) return;
 				bookAndFill1D("CutFlow", "Yields vs Selection Step", 3, "Selection Step", 6, -0.5, 5.5, weight);
 				double btaggedWeight = weight*fatJetTrackJets[0][0].tagEff()*fatJetTrackJets[0][1].tagEff()*fatJetTrackJets[1][0].tagEff()*fatJetTrackJets[1][1].tagEff();
-				if(btaggedWeight < 0.316) continue;
+				if(btaggedWeight < 0.316) return;
 				bookAndFill1D("CutFlow", "Yields vs Selection Step", 4, "Selection Step", 6, -0.5, 5.5, btaggedWeight);
 
 				float xhh1 = (trimmed[0].m()-124.)/(0.1*trimmed[0].m());
