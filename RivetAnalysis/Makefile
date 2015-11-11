@@ -3,8 +3,8 @@ LIBS   = $(SRCS:%.cc=Rivet%.so)
 DATA   = $(wildcard *.yoda)
 PLOTS  = $(DATA:%.yoda=plots/%)
 MKHTML = $(DATA:%.yoda=%.yoda:Title=%)
-ROOTCFLAGS=$(shell ${ROOTSYS}/bin/root-config --cflags)
-ROOTLIBS=$(shell ${ROOTSYS}/bin/root-config --libs)
+ROOTCFLAGS=$(shell root-config --cflags)
+ROOTLIBS=$(shell root-config --libs)
 ROOTLIBS += -lTMVA
 
 all: $(LIBS)

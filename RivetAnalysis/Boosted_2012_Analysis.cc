@@ -164,11 +164,11 @@ namespace Rivet {
 				std::map<std::string, boost::shared_ptr<YODA::Histo1D> >::const_iterator hIt = _histograms_1d.find("CutFlow");
 				if(hIt == _histograms_1d.end()) std::cout <<"finalize: Could not obtain CutFlow YODA::Histo1D!"<< std::endl;
 				else{
-					const YODA::HistoBin1D& bin0 = hIt->second->binAt(0);
+					const YODA::HistoBin1D& bin0 = hIt->second->bin(hIt->second->binIndexAt(0));
 					sumW_input = bin0.area();
 					nEvent_input = bin0.numEntries();
-					const YODA::HistoBin1D& bin1 = hIt->second->binAt(1);
-					sumW_4jets = bin0.area();
+					const YODA::HistoBin1D& bin2 = hIt->second->bin(hIt->second->binIndexAt(1));
+					sumW_4jets = bin2.area();
 				}
 				double xSection = crossSection();
 				double intLumi = nEvent_input/xSection;
@@ -482,23 +482,23 @@ namespace Rivet {
 			}
 
 			void finalizeEfficiency(std::string label, std::string pass, std::string fail, std::string axis="") {
-				boost::shared_ptr<YODA::Histo1D> hist_pass = _histograms_1d[label+pass];
+				/*boost::shared_ptr<YODA::Histo1D> hist_pass = _histograms_1d[label+pass];
 				boost::shared_ptr<YODA::Histo1D> hist_fail = _histograms_1d[label+fail];
 
 				if (!hist_pass) return;
 
-				for (int i=0; i<hist_pass->bins().size(); ++i) {
+				for(unsigned int i=0; i<hist_pass->bins().size(); ++i) {
 					double entries_pass = hist_pass->bin(i).sumW();
 					double entries_total = entries_pass + (hist_fail ? hist_fail->bin(i).sumW() : 0.);
 
-					/*if (entries_total > 0 && entries_pass >= 0) {
-					  bookAndFill1D(label+"efficiency", hist_pass->title(), (hist_pass->bin(i).lowEdge()+hist_pass->bin(i).highEdge())/2., 
-					  axis, std::string("BLARG"), hist_pass->lowEdge(), hist_pass->highEdge(), 
-
-					//            axis, hist_pass->bins()->title(), hist_pass->lowEdge(), hist_pass->highEdge(), 
-					entries_pass/entries_total * hist_pass->bin(i).width());
-					}*/
-				}
+//					if (entries_total > 0 && entries_pass >= 0) {
+//					  bookAndFill1D(label+"efficiency", hist_pass->title(), (hist_pass->bin(i).lowEdge()+hist_pass->bin(i).highEdge())/2., 
+//					  axis, std::string("BLARG"), hist_pass->lowEdge(), hist_pass->highEdge(), 
+//
+//					//            axis, hist_pass->bins()->title(), hist_pass->lowEdge(), hist_pass->highEdge(), 
+//					entries_pass/entries_total * hist_pass->bin(i).width());
+//					}
+				}*/
 			}
 
 			/// Histogram booking and filling in one step, histograms are automatically created at the first fill
@@ -566,17 +566,17 @@ namespace Rivet {
 				assert(fuzzyEquals(q2, q21+q22, 1e-4));
 
 				Vector3 nZ(0., 0., 1.);
-				Vector3 n1  = q11.p().cross(q12.p()).unit();
-				Vector3 n2  = q21.p().cross(q22.p()).unit();
-				Vector3 nSC = nZ.cross(q1.p()).unit();
+				Vector3 n1  = q11.p3().cross(q12.p3()).unit();
+				Vector3 n2  = q21.p3().cross(q22.p3()).unit();
+				Vector3 nSC = nZ.cross(q1.p3()).unit();
 
 				//PRINT(n1);
 				//PRINT(n2);
 				//PRINT(nSC);
 
-				cos_theta_star = cos(q1.p().theta()-nZ.theta());
-				phi  = sign(q1.p().dot(n1.cross(n2))) * acos(-n1.dot(n2)); 
-				phi1 = sign(q1.p().dot(n1.cross(nSC))) * acos(n1.dot(nSC));
+				cos_theta_star = cos(q1.p3().theta()-nZ.theta());
+				phi  = sign(q1.p3().dot(n1.cross(n2))) * acos(-n1.dot(n2)); 
+				phi1 = sign(q1.p3().dot(n1.cross(nSC))) * acos(n1.dot(nSC));
 
 				LorentzTransform to_H1_CoM(-q1_lab.boostVector());
 				LorentzTransform to_H2_CoM(-q2_lab.boostVector());
@@ -584,8 +584,8 @@ namespace Rivet {
 				FourMomentum q11_H1 = to_H1_CoM.transform(q11_lab);
 				FourMomentum q21_H2 = to_H2_CoM.transform(q21_lab);
 
-				cos_theta1 = q1.p().dot(q11_H1.p()) / sqrt(q1.p().mod2()*q11_H1.p().mod2());
-				cos_theta2 = q2.p().dot(q21_H2.p()) / sqrt(q2.p().mod2()*q21_H2.p().mod2());
+				cos_theta1 = q1.p3().dot(q11_H1.p3()) / sqrt(q1.p3().mod2()*q11_H1.p3().mod2());
+				cos_theta2 = q2.p3().dot(q21_H2.p3()) / sqrt(q2.p3().mod2()*q21_H2.p3().mod2());
 			}
 			//@}
 

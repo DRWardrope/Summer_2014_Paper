@@ -46,8 +46,8 @@ class ChargedFinalStateWithGhosts : public ChargedFinalState {
             ChargedFinalState::project(e);
 
             // Loop over the GenParticles and add the ghosts
-            std::vector<HepMC::GenParticle *> allParticles = Rivet::particles(e.genEvent());
-            foreach(HepMC::GenParticle *g, allParticles) {
+            std::vector<const HepMC::GenParticle *> allParticles = Rivet::particles(e.genEvent());
+            foreach(const HepMC::GenParticle *g, allParticles) {
 
                 if (_pids.find(g->pdg_id()) != _pids.end()) {
                     Particle p(*g);

@@ -9,8 +9,8 @@ INPUTDIR=$1
 PROCESS=`echo $INPUTDIR | rev | cut -d '/' -f1 | rev`
 echo $PROCESS
 QUEUE=medium
-RIVETDIR=/unix/atlas3/wardrope/2014Paper/Rivet2HHAnalysis
-OUTPUTDIR=/unix/atlas3/wardrope/2014Paper/AnaResults/$PROCESS
+RIVETDIR=/home/wardrope/HH4bProspects/Summer_2014_Paper/RivetAnalysis
+OUTPUTDIR=/unix/atlas3/wardrope/HH4bProspects/AnaResults/$PROCESS
 ls $OUTPUTDIR
 if [ $? -ne 0 ]
 then
@@ -82,13 +82,14 @@ do
 	for IFILE in `seq $COUNTER 1 $UP`
 	do
 		RIVETCMD="$RIVETCMD ${ARRAY[$IFILE]}"
+		echo $IFILE
 	done
 	echo $RIVETCMD >> $PROCESS$COUNTER.sh
 	echo mv ${PROCESS}_$COUNTER.yoda $OUTPUTDIR/. >> $PROCESS$COUNTER.sh
 	echo mv MVAResults.root $OUTPUTDIR/${PROCESS}_$COUNTER.root >> $PROCESS$COUNTER.sh
 	echo cd .. >> $PROCESS$COUNTER.sh
 	echo rm -r \${PBS_JOBID} >> $PROCESS$COUNTER.sh
-	qsub -q $QUEUE $PROCESS$COUNTER.sh
-	rm $PROCESS$COUNTER.sh
+	#qsub -q $QUEUE $PROCESS$COUNTER.sh
+	#rm $PROCESS$COUNTER.sh
 done
 

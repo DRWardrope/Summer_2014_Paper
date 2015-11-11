@@ -1,6 +1,4 @@
 export RIVET_ANALYSIS_PATH=$PWD
-source /usr/local/gcc43/setup.sh
-export ROOTSYS=/usr/local/root-v5.34.12-gcc4.3/
 export LD_LIBRARY_PATH=${ROOTSYS}/lib:$LD_LIBRARY_PATH
 export PATH=${ROOTSYS}/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/python-2.7.6/lib:$LD_LIBRARY_PATH
